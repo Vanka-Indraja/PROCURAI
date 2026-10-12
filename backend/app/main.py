@@ -4,6 +4,8 @@ import shutil
 
 from app.services.pdf_service import extract_pdf_text
 from app.services.requirement_service import extract_requirements
+from app.services.standards_service import load_standards
+from app.services.matching_service import match_requirement_to_standards
 
 app = FastAPI()
 
@@ -16,6 +18,17 @@ def home():
     return {
         "project": "PROCURAI",
         "status": "Backend is running"
+    }
+
+
+@app.get("/standards")
+def get_standards():
+
+    standards = load_standards()
+
+    return {
+        "count": len(standards),
+        "standards": standards
     }
 
 
@@ -40,10 +53,26 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     requirements = extract_requirements(extracted_text)
 
+    standards = load_standards()
+
+    results = []
+
+    for requirement in requirements:
+
+        matches = match_requirement_to_standards(
+            requirement,
+            standards
+        )
+
+        results.append({
+            "requirement": requirement,
+            "matched_standards": matches
+        })
+
     return {
         "filename": file.filename,
         "status": "PDF processed successfully",
         "characters_extracted": len(extracted_text),
         "requirements_found": len(requirements),
-        "requirements": requirements
+        "results": results
     }

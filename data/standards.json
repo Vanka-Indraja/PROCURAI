@@ -1,0 +1,61 @@
+[
+  {
+    "id": "STD001",
+    "standard_number": "TEST-STD-001",
+    "title": "Low Voltage Electrical Cable Requirements",
+    "category": "Electrical",
+    "product_type": "Electrical cable",
+    "keywords": [
+      "electrical cable",
+      "low voltage",
+      "building installation",
+      "rated voltage"
+    ],
+    "description": "Testing dataset entry covering low-voltage electrical cables used for building installations.",
+    "verified": false
+  },
+  {
+    "id": "STD002",
+    "standard_number": "TEST-STD-002",
+    "title": "Cable Insulation Requirements",
+    "category": "Electrical",
+    "product_type": "Electrical cable",
+    "keywords": [
+      "insulation",
+      "cable insulation",
+      "electrical safety"
+    ],
+    "description": "Testing dataset entry covering insulation requirements for electrical cables.",
+    "verified": false
+  },
+  {
+    "id": "STD003",
+    "standard_number": "TEST-STD-003",
+    "title": "Fire Performance of Electrical Cables",
+    "category": "Electrical",
+    "product_type": "Electrical cable",
+    "keywords": [
+      "fire performance",
+      "fire safety",
+      "flame",
+      "cable"
+    ],
+    "description": "Testing dataset entry covering fire-performance requirements for electrical cables.",
+    "verified": false
+  },
+  {
+    "id": "STD004",
+    "standard_number": "TEST-STD-004",
+    "title": "Electrical Cable Testing Requirements",
+    "category": "Electrical",
+    "product_type": "Electrical cable",
+    "keywords": [
+      "testing",
+      "test documentation",
+      "supplier testing",
+      "electrical cable"
+    ],
+    "description": "Testing dataset entry covering test documentation and technical testing requirements.",
+    "verified": false
+  }
+]
