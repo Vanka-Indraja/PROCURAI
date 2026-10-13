@@ -2,6 +2,7 @@ backend/.venv/
 **/__pycache__/
 *.pyc
 backend/app/uploads/
+backend/app/reports/
 .env
 *.env
 .vscode/

@@ -12,7 +12,9 @@
       "rated voltage"
     ],
     "description": "Testing dataset entry covering low-voltage electrical cables used for building installations.",
-    "verified": false
+    "verified": false,
+    "source_name": "Synthetic Test Dataset",
+    "source_url": null
   },
   {
     "id": "STD002",
@@ -26,7 +28,9 @@
       "electrical safety"
     ],
     "description": "Testing dataset entry covering insulation requirements for electrical cables.",
-    "verified": false
+    "verified": false,
+    "source_name": "Synthetic Test Dataset",
+"source_url": null
   },
   {
     "id": "STD003",
@@ -41,7 +45,9 @@
       "cable"
     ],
     "description": "Testing dataset entry covering fire-performance requirements for electrical cables.",
-    "verified": false
+    "verified": false,
+    "source_name": "Synthetic Test Dataset",
+    "source_url": null
   },
   {
     "id": "STD004",
@@ -56,6 +62,8 @@
       "electrical cable"
     ],
     "description": "Testing dataset entry covering test documentation and technical testing requirements.",
-    "verified": false
+    "verified": false,
+    "source_name": "Synthetic Test Dataset",
+    "source_url": null
   }
 ]
