@@ -1,15 +1,53 @@
-import json
-from pathlib import Path
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-
-DATA_FILE = PROJECT_ROOT / "data" / "standards.json"
+from app.database import SessionLocal
+from app.models import Standard
 
 
 def load_standards():
+    db = SessionLocal()
 
-    with open(DATA_FILE, "r", encoding="utf-8") as file:
-        standards = json.load(file)
+    try:
+        database_standards = (
+            db.query(Standard)
+            .order_by(Standard.id.asc())
+            .all()
+        )
 
-    return standards
+        standards = []
+
+        for standard in database_standards:
+            standards.append(
+                {
+                    # Keep both keys for compatibility
+                    "id": standard.standard_id,
+                    "standard_id": standard.standard_id,
+
+                    "standard_number": (
+                        standard.standard_number
+                    ),
+
+                    "title": standard.title,
+
+                    "keywords": (
+                        standard.keywords
+                        if standard.keywords
+                        else []
+                    ),
+
+                    "verified": (
+                        standard.verified
+                    ),
+
+                    "source_name": (
+                        standard.source_name
+                    ),
+
+                    "source_url": (
+                        standard.source_url
+                    ),
+                }
+            )
+
+        return standards
+
+    finally:
+        db.close()
