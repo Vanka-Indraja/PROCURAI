@@ -202,6 +202,24 @@ class Requirement(Base):
         nullable=True,
     )
 
+    # =====================================================
+    # GENERALIZED EXTRACTION FIELDS
+    # =====================================================
+
+    category = Column(
+        String(100),
+        nullable=True,
+    )
+
+    source_text = Column(
+        Text,
+        nullable=True,
+    )
+
+    # =====================================================
+    # REVIEW / DECISION FIELDS
+    # =====================================================
+
     decision = Column(
         String(100),
         nullable=True,

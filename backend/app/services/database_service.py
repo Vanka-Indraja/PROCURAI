@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import func
 
 from app.database import SessionLocal
-
 from app.models import (
     Analysis,
     Document,
@@ -17,11 +16,18 @@ from app.models import (
 # =========================================================
 
 def parse_timestamp(timestamp_value):
-    if isinstance(
-        timestamp_value,
-        datetime,
-    ):
+    if isinstance(timestamp_value, datetime):
         return timestamp_value
+
+    if timestamp_value is None:
+        return None
+
+    # Support ISO timestamps ending in Z also.
+    if isinstance(timestamp_value, str):
+        timestamp_value = timestamp_value.replace(
+            "Z",
+            "+00:00",
+        )
 
     return datetime.fromisoformat(
         timestamp_value
@@ -65,8 +71,11 @@ def save_analysis_to_database(
             ),
         )
 
-        db.add(document)
+        db.add(
+            document
+        )
 
+        # We need document.id
         db.flush()
 
 
@@ -75,11 +84,15 @@ def save_analysis_to_database(
         # =================================================
 
         analysis = Analysis(
-            analysis_id=response_data[
-                "analysis_id"
-            ],
+            analysis_id=(
+                response_data[
+                    "analysis_id"
+                ]
+            ),
 
-            document_id=document.id,
+            document_id=(
+                document.id
+            ),
 
             analysis_timestamp=(
                 parse_timestamp(
@@ -138,8 +151,11 @@ def save_analysis_to_database(
             ),
         )
 
-        db.add(analysis)
+        db.add(
+            analysis
+        )
 
+        # We need analysis.id
         db.flush()
 
 
@@ -153,23 +169,28 @@ def save_analysis_to_database(
         ):
 
             requirement_data = (
-                result["requirement"]
+                result.get(
+                    "requirement",
+                    {},
+                )
             )
 
 
             requirement = Requirement(
-                analysis_db_id=analysis.id,
+                analysis_db_id=(
+                    analysis.id
+                ),
 
                 requirement_code=(
-                    requirement_data[
+                    requirement_data.get(
                         "id"
-                    ]
+                    )
                 ),
 
                 requirement_name=(
-                    requirement_data[
+                    requirement_data.get(
                         "requirement"
-                    ]
+                    )
                 ),
 
                 value=(
@@ -195,6 +216,26 @@ def save_analysis_to_database(
                         "status"
                     )
                 ),
+
+                # =========================================
+                # GENERALIZED EXTRACTION FIELDS
+                # =========================================
+
+                category=(
+                    requirement_data.get(
+                        "category"
+                    )
+                ),
+
+                source_text=(
+                    requirement_data.get(
+                        "source_text"
+                    )
+                ),
+
+                # =========================================
+                # REVIEW / DECISION DATA
+                # =========================================
 
                 decision=(
                     result.get(
@@ -227,8 +268,11 @@ def save_analysis_to_database(
                 ),
             )
 
-            db.add(requirement)
+            db.add(
+                requirement
+            )
 
+            # Need requirement.id
             db.flush()
 
 
@@ -242,9 +286,7 @@ def save_analysis_to_database(
                 )
             )
 
-
             best_traceability_id = None
-
 
             if best_match:
 
@@ -256,7 +298,7 @@ def save_analysis_to_database(
 
 
             # =============================================
-            # STANDARD MATCHES
+            # SAVE ALL STANDARD MATCHES
             # =============================================
 
             for match_data in result.get(
@@ -271,174 +313,189 @@ def save_analysis_to_database(
                 )
 
 
-                # Fallback:
-                # some older result formats stored
-                # matched_keywords inside evidence.
+                # Backward compatibility:
+                # older results may have keywords
+                # only inside evidence.
 
                 if matched_keywords is None:
 
-                    matched_keywords = (
+                    evidence_data = (
                         match_data.get(
-                            "evidence",
-                            {},
-                        ).get(
+                            "evidence"
+                        )
+                        or {}
+                    )
+
+                    matched_keywords = (
+                        evidence_data.get(
                             "matched_keywords",
                             [],
                         )
                     )
 
 
-                standard_match = (
-                    StandardMatch(
+                standard_match = StandardMatch(
+                    requirement_id=(
+                        requirement.id
+                    ),
 
-                        requirement_id=(
-                            requirement.id
-                        ),
+                    traceability_id=(
+                        match_data.get(
+                            "traceability_id"
+                        )
+                    ),
 
-                        traceability_id=(
-                            match_data.get(
-                                "traceability_id"
-                            )
-                        ),
+                    standard_id=(
+                        match_data.get(
+                            "standard_id"
+                        )
+                    ),
 
-                        standard_id=(
-                            match_data.get(
-                                "standard_id"
-                            )
-                        ),
+                    standard_number=(
+                        match_data.get(
+                            "standard_number"
+                        )
+                    ),
 
-                        standard_number=(
-                            match_data.get(
-                                "standard_number"
-                            )
-                        ),
+                    title=(
+                        match_data.get(
+                            "title"
+                        )
+                    ),
 
-                        title=(
-                            match_data.get(
-                                "title"
-                            )
-                        ),
+                    # =====================================
+                    # LEGACY MATCH FIELD
+                    # =====================================
 
-                        # Legacy keyword matcher field
-                        match_score=(
-                            match_data.get(
-                                "match_score"
-                            )
-                        ),
+                    match_score=(
+                        match_data.get(
+                            "match_score"
+                        )
+                    ),
 
-                        # Hybrid confidence
-                        confidence=(
-                            match_data.get(
-                                "confidence"
-                            )
-                        ),
+                    # =====================================
+                    # CONFIDENCE
+                    # =====================================
 
-                        confidence_level=(
-                            match_data.get(
-                                "confidence_level"
-                            )
-                        ),
+                    confidence=(
+                        match_data.get(
+                            "confidence"
+                        )
+                    ),
 
-                        evidence_strength=(
-                            match_data.get(
-                                "evidence_strength"
-                            )
-                        ),
+                    confidence_level=(
+                        match_data.get(
+                            "confidence_level"
+                        )
+                    ),
 
-                        verified=(
-                            match_data.get(
-                                "verified",
-                                False,
-                            )
-                        ),
+                    evidence_strength=(
+                        match_data.get(
+                            "evidence_strength"
+                        )
+                    ),
 
-                        needs_human_review=(
-                            match_data.get(
-                                "needs_human_review",
-                                True,
-                            )
-                        ),
+                    # =====================================
+                    # SOURCE VERIFICATION
+                    # =====================================
 
-                        source_verification_status=(
-                            match_data.get(
-                                "source_verification_status"
-                            )
-                        ),
+                    verified=(
+                        match_data.get(
+                            "verified",
+                            False,
+                        )
+                    ),
 
-                        source_name=(
-                            match_data.get(
-                                "source_name"
-                            )
-                        ),
+                    needs_human_review=(
+                        match_data.get(
+                            "needs_human_review",
+                            True,
+                        )
+                    ),
 
-                        source_url=(
-                            match_data.get(
-                                "source_url"
-                            )
-                        ),
+                    source_verification_status=(
+                        match_data.get(
+                            "source_verification_status"
+                        )
+                    ),
 
-                        evidence_type=(
-                            match_data.get(
-                                "evidence_type"
-                            )
-                        ),
+                    source_name=(
+                        match_data.get(
+                            "source_name"
+                        )
+                    ),
 
-                        match_method=(
-                            match_data.get(
-                                "match_method"
-                            )
-                        ),
+                    source_url=(
+                        match_data.get(
+                            "source_url"
+                        )
+                    ),
 
-                        evidence=(
-                            match_data.get(
-                                "evidence"
-                            )
-                        ),
+                    # =====================================
+                    # EVIDENCE
+                    # =====================================
 
-                        # =================================
-                        # HYBRID AI FIELDS
-                        # =================================
+                    evidence_type=(
+                        match_data.get(
+                            "evidence_type"
+                        )
+                    ),
 
-                        keyword_score=(
-                            match_data.get(
-                                "keyword_score"
-                            )
-                        ),
+                    match_method=(
+                        match_data.get(
+                            "match_method"
+                        )
+                    ),
 
-                        semantic_score=(
-                            match_data.get(
-                                "semantic_score"
-                            )
-                        ),
+                    evidence=(
+                        match_data.get(
+                            "evidence"
+                        )
+                    ),
 
-                        hybrid_score=(
-                            match_data.get(
-                                "hybrid_score"
-                            )
-                        ),
+                    # =====================================
+                    # HYBRID AI SCORES
+                    # =====================================
 
-                        model_name=(
-                            match_data.get(
-                                "model_name"
-                            )
-                        ),
+                    keyword_score=(
+                        match_data.get(
+                            "keyword_score"
+                        )
+                    ),
 
-                        matched_keywords=(
-                            matched_keywords
-                        ),
+                    semantic_score=(
+                        match_data.get(
+                            "semantic_score"
+                        )
+                    ),
 
-                        # =================================
-                        # BEST MATCH FLAG
-                        # =================================
+                    hybrid_score=(
+                        match_data.get(
+                            "hybrid_score"
+                        )
+                    ),
 
-                        is_best_match=(
-                            match_data.get(
-                                "traceability_id"
-                            )
-                            ==
-                            best_traceability_id
-                        ),
-                    )
+                    model_name=(
+                        match_data.get(
+                            "model_name"
+                        )
+                    ),
+
+                    matched_keywords=(
+                        matched_keywords
+                    ),
+
+                    # =====================================
+                    # BEST MATCH FLAG
+                    # =====================================
+
+                    is_best_match=(
+                        match_data.get(
+                            "traceability_id"
+                        )
+                        ==
+                        best_traceability_id
+                    ),
                 )
 
                 db.add(
@@ -447,7 +504,7 @@ def save_analysis_to_database(
 
 
         # =================================================
-        # COMMIT
+        # COMMIT EVERYTHING
         # =================================================
 
         db.commit()
@@ -479,7 +536,7 @@ def save_analysis_to_database(
 
 
 # =========================================================
-# LIST REPORTS
+# LIST SAVED REPORTS
 # =========================================================
 
 def list_reports_from_database():
@@ -489,7 +546,9 @@ def list_reports_from_database():
     try:
 
         analyses = (
-            db.query(Analysis)
+            db.query(
+                Analysis
+            )
             .order_by(
                 Analysis.analysis_timestamp.desc()
             )
@@ -502,6 +561,11 @@ def list_reports_from_database():
 
         for analysis in analyses:
 
+            document = (
+                analysis.document
+            )
+
+
             reports.append(
                 {
                     "analysis_id": (
@@ -509,11 +573,15 @@ def list_reports_from_database():
                     ),
 
                     "filename": (
-                        analysis.document.filename
+                        document.filename
+                        if document
+                        else None
                     ),
 
                     "analysis_timestamp": (
                         analysis.analysis_timestamp.isoformat()
+                        if analysis.analysis_timestamp
+                        else None
                     ),
 
                     "matcher_version": (
@@ -573,7 +641,10 @@ def serialize_match(
             match.title
         ),
 
-        # Legacy matcher
+        # =============================================
+        # LEGACY SCORE
+        # =============================================
+
         "match_score": (
             match.match_score
         ),
@@ -612,6 +683,10 @@ def serialize_match(
             else []
         ),
 
+        # =============================================
+        # VERIFICATION
+        # =============================================
+
         "verified": (
             match.verified
         ),
@@ -631,6 +706,10 @@ def serialize_match(
         "source_url": (
             match.source_url
         ),
+
+        # =============================================
+        # EXPLAINABILITY
+        # =============================================
 
         "evidence_type": (
             match.evidence_type
@@ -655,6 +734,47 @@ def serialize_match(
 
 
 # =========================================================
+# MATCH SORT SCORE
+# =========================================================
+
+def get_match_sort_score(
+    match_data,
+):
+
+    hybrid_score = (
+        match_data.get(
+            "hybrid_score"
+        )
+    )
+
+    if hybrid_score is not None:
+        return hybrid_score
+
+
+    confidence = (
+        match_data.get(
+            "confidence"
+        )
+    )
+
+    if confidence is not None:
+        return confidence
+
+
+    match_score = (
+        match_data.get(
+            "match_score"
+        )
+    )
+
+    if match_score is not None:
+        return match_score
+
+
+    return 0
+
+
+# =========================================================
 # GET ONE COMPLETE REPORT
 # =========================================================
 
@@ -667,25 +787,37 @@ def get_report_from_database(
     try:
 
         analysis = (
-            db.query(Analysis)
+            db.query(
+                Analysis
+            )
             .filter(
                 Analysis.analysis_id
-                == analysis_id
+                ==
+                analysis_id
             )
             .first()
         )
 
 
         if analysis is None:
+
             return None
 
 
         results = []
 
 
+        # =================================================
+        # REQUIREMENTS
+        # =================================================
+
         for requirement in (
             analysis.requirements
         ):
+
+            # =============================================
+            # ALL MATCHES
+            # =============================================
 
             all_matches = [
                 serialize_match(
@@ -696,21 +828,15 @@ def get_report_from_database(
             ]
 
 
-            # Highest score first
             all_matches.sort(
-                key=lambda item: (
-                    item.get(
-                        "hybrid_score"
-                    )
-                    or
-                    item.get(
-                        "confidence"
-                    )
-                    or 0
-                ),
+                key=get_match_sort_score,
                 reverse=True,
             )
 
+
+            # =============================================
+            # BEST MATCH
+            # =============================================
 
             best_match = None
 
@@ -729,6 +855,10 @@ def get_report_from_database(
 
                     break
 
+
+            # =============================================
+            # MATCH METHOD
+            # =============================================
 
             match_method = (
                 analysis.matcher_version
@@ -759,6 +889,10 @@ def get_report_from_database(
                 )
 
 
+            # =============================================
+            # REQUIREMENT RESULT
+            # =============================================
+
             results.append(
                 {
 
@@ -787,6 +921,18 @@ def get_report_from_database(
                         "status": (
                             requirement.status
                         ),
+
+                        # =================================
+                        # GENERALIZED EXTRACTION FIELDS
+                        # =================================
+
+                        "category": (
+                            requirement.category
+                        ),
+
+                        "source_text": (
+                            requirement.source_text
+                        ),
                     },
 
 
@@ -800,6 +946,8 @@ def get_report_from_database(
 
                     "review_flags": (
                         requirement.review_flags
+                        if requirement.review_flags
+                        else []
                     ),
 
                     "recommended_action": (
@@ -826,7 +974,7 @@ def get_report_from_database(
 
 
         # =================================================
-        # SORT REQUIREMENTS BY PRIORITY
+        # SORT RESULTS BY REVIEW PRIORITY
         # =================================================
 
         priority_order = {
@@ -839,9 +987,9 @@ def get_report_from_database(
         results.sort(
             key=lambda item: (
                 priority_order.get(
-                    item[
+                    item.get(
                         "review_priority"
-                    ],
+                    ),
                     4,
                 )
             )
@@ -849,13 +997,41 @@ def get_report_from_database(
 
 
         # =================================================
-        # FINAL DATABASE REPORT
+        # MATCHING ENGINE NAME
+        # =================================================
+
+        if (
+            analysis.matcher_version
+            ==
+            "HYBRID_KEYWORD_SEMANTIC_V1"
+        ):
+
+            matching_engine = (
+                "Hybrid Keyword + Semantic AI"
+            )
+
+        else:
+
+            matching_engine = (
+                "Legacy Matching Engine"
+            )
+
+
+        document = (
+            analysis.document
+        )
+
+
+        # =================================================
+        # FINAL REPORT
         # =================================================
 
         return {
 
             "filename": (
-                analysis.document.filename
+                document.filename
+                if document
+                else None
             ),
 
             "status": (
@@ -863,11 +1039,15 @@ def get_report_from_database(
             ),
 
             "characters_extracted": (
-                analysis.document.characters_extracted
+                document.characters_extracted
+                if document
+                else None
             ),
 
             "ocr_required": (
-                analysis.document.ocr_required
+                document.ocr_required
+                if document
+                else False
             ),
 
             "analysis_id": (
@@ -876,6 +1056,8 @@ def get_report_from_database(
 
             "analysis_timestamp": (
                 analysis.analysis_timestamp.isoformat()
+                if analysis.analysis_timestamp
+                else None
             ),
 
             "matcher_version": (
@@ -883,10 +1065,7 @@ def get_report_from_database(
             ),
 
             "matching_engine": (
-                "Hybrid Keyword + Semantic AI"
-                if analysis.matcher_version
-                == "HYBRID_KEYWORD_SEMANTIC_V1"
-                else "Legacy Matching Engine"
+                matching_engine
             ),
 
             "document_status": (
@@ -903,10 +1082,14 @@ def get_report_from_database(
 
             "document_review_reasons": (
                 analysis.document_review_reasons
+                if analysis.document_review_reasons
+                else []
             ),
 
             "top_priority_issues": (
                 analysis.top_priority_issues
+                if analysis.top_priority_issues
+                else []
             ),
 
             "analysis_completion_percentage": (
@@ -915,6 +1098,8 @@ def get_report_from_database(
 
             "summary": (
                 analysis.summary
+                if analysis.summary
+                else {}
             ),
 
             "results": (
@@ -954,16 +1139,20 @@ def delete_report_from_database(
     try:
 
         analysis = (
-            db.query(Analysis)
+            db.query(
+                Analysis
+            )
             .filter(
                 Analysis.analysis_id
-                == analysis_id
+                ==
+                analysis_id
             )
             .first()
         )
 
 
         if analysis is None:
+
             return False
 
 
@@ -971,6 +1160,10 @@ def delete_report_from_database(
             analysis.document_id
         )
 
+
+        # =================================================
+        # COUNT ANALYSES FOR SAME DOCUMENT
+        # =================================================
 
         analysis_count = (
             db.query(
@@ -980,32 +1173,56 @@ def delete_report_from_database(
             )
             .filter(
                 Analysis.document_id
-                == document_id
+                ==
+                document_id
             )
             .scalar()
         )
 
 
-        # Current PROCURAI workflow creates
-        # one document per uploaded analysis.
-        # If this is the only analysis,
-        # deleting Document cascades everything.
+        # =================================================
+        # DELETE
+        # =================================================
+
+        # Current workflow normally creates one Document
+        # for one uploaded analysis.
+        #
+        # If this is the only analysis linked to that
+        # document, delete the Document. Cascade removes:
+        #
+        # Document
+        #   -> Analysis
+        #   -> Requirement
+        #   -> StandardMatch
+        #
+        # Otherwise delete only this analysis.
 
         if analysis_count == 1:
 
             document = (
-                db.query(Document)
+                db.query(
+                    Document
+                )
                 .filter(
                     Document.id
-                    == document_id
+                    ==
+                    document_id
                 )
                 .first()
             )
+
 
             if document:
 
                 db.delete(
                     document
+                )
+
+            else:
+
+                # Safety fallback.
+                db.delete(
+                    analysis
                 )
 
 
