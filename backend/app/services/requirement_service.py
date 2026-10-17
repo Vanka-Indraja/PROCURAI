@@ -2,139 +2,109 @@ import re
 
 
 # =========================================================
-# COMMERCIAL KEYWORDS
+# COMMERCIAL / NON-TECHNICAL KEYWORDS
 # =========================================================
 
-COMMERCIAL_KEYWORDS = {
+COMMERCIAL_KEYWORDS = [
     "quantity",
-    "qty",
-    "price",
-    "cost",
-    "rate",
-    "amount",
-    "payment",
+    "commercial detail",
+    "unit price",
+    "total price",
+    "payment terms",
     "delivery period",
-    "delivery date",
-    "bid price",
-    "emd",
+    "delivery schedule",
+    "bid security",
     "earnest money",
-    "tender fee",
-    "tax",
+    "emd",
     "gst",
-}
+    "tax",
+    "freight",
+    "invoice",
+]
 
 
 # =========================================================
 # TECHNICAL SECTION NAMES
 # =========================================================
 
-TECHNICAL_SECTION_NAMES = {
+TECHNICAL_SECTION_NAMES = [
     "technical requirements",
     "technical requirement",
     "technical specifications",
     "technical specification",
-    "technical specs",
-    "technical data",
     "specifications",
-}
+    "technical details",
+    "technical parameters",
+]
 
 
 # =========================================================
-# OTHER SECTION HEADINGS
+# COMMON DOCUMENT SECTION HEADINGS
 # =========================================================
 
-SECTION_HEADINGS = {
+SECTION_HEADINGS = [
     "procurement overview",
-    "overview",
+    "technical requirements",
+    "technical requirement",
+    "technical specifications",
+    "technical specification",
+    "specifications",
+    "technical details",
+    "technical parameters",
     "additional notes",
-    "notes",
+    "expected procurai output",
     "expected procurai processing behaviour",
-    "expected processing behaviour",
-    "commercial terms",
+    "expected processing",
+    "commercial details",
+    "commercial requirements",
     "terms and conditions",
-    "price schedule",
-    "bid details",
-    "introduction",
-    "scope",
-    "scope of work",
-}
+]
 
 
 # =========================================================
-# TECHNICAL CATEGORY PATTERNS
+# CATEGORY PATTERNS
 # =========================================================
 
-TECHNICAL_CATEGORY_PATTERNS = {
-
+CATEGORY_PATTERNS = {
     "voltage": [
+        r"\brated voltage\b",
+        r"\bvoltage rating\b",
         r"\bvoltage\b",
         r"\bkv\b",
-        r"\bvolts?\b",
-    ],
-
-    "current": [
-        r"\bcurrent\b",
-        r"\bampere\b",
-        r"\bamps?\b",
-        r"\d+(\.\d+)?\s*a\b",
-    ],
-
-    "power": [
-        r"\bpower\b",
-        r"\bkw\b",
-        r"\bwatts?\b",
+        r"\bvolt(?:age)?\b",
     ],
 
     "insulation": [
         r"\binsulation\b",
-        r"\binsulated\b",
         r"\bxlpe\b",
-        r"\bpvc\b",
+        r"\bpvc insulation\b",
     ],
 
     "fire_safety": [
-        r"\bfire\b",
-        r"\bflame\b",
+        r"\bfire performance\b",
+        r"\bfire safety\b",
+        r"\bfire-safety\b",
         r"\bflame retardant\b",
+        r"\bflame\b",
         r"\bfire resistant\b",
-        r"\bfrls\b",
     ],
 
     "testing": [
-        r"\btest\b",
         r"\btesting\b",
-        r"\btested\b",
-        r"\btest certificates?\b",
-        r"\btest reports?\b",
+        r"\btest documentation\b",
+        r"\btest certificate\b",
+        r"\btest report\b",
+        r"\btype test\b",
+        r"\broutine test\b",
         r"\binspection\b",
-        r"\bverification\b",
     ],
 
     "certification": [
-        r"\bcertificates?\b",
         r"\bcertification\b",
+        r"\bcertificate\b",
         r"\bcertified\b",
-        r"\bcompliance\b",
+        r"\bcompliance certificate\b",
         r"\bconformity\b",
-        r"\bapproval\b",
-    ],
-
-    "dimensions": [
-        r"\bdimension\b",
-        r"\bdiameter\b",
-        r"\blength\b",
-        r"\bwidth\b",
-        r"\bheight\b",
-        r"\bthickness\b",
-        r"\bmm\b",
-        r"\bcm\b",
-    ],
-
-    "temperature": [
-        r"\btemperature\b",
-        r"\bdegrees?\b",
-        r"\b°c\b",
-        r"\bcelsius\b",
     ],
 
     "material": [
@@ -142,96 +112,134 @@ TECHNICAL_CATEGORY_PATTERNS = {
         r"\bcopper\b",
         r"\baluminium\b",
         r"\baluminum\b",
-        r"\bsteel\b",
         r"\bpolymer\b",
     ],
 
-    "performance": [
-        r"\bperformance\b",
-        r"\befficiency\b",
-        r"\brating\b",
-        r"\bcapacity\b",
-        r"\btolerance\b",
+    "construction": [
+        r"\bconstruction\b",
+        r"\barmoured\b",
+        r"\barmored\b",
+        r"\bsheath\b",
+        r"\bjacket\b",
     ],
 
-    "safety": [
-        r"\bsafety\b",
-        r"\bprotection\b",
-        r"\bprotective\b",
-        r"\bhazard\b",
-        r"\bshock\b",
+    "conductor": [
+        r"\bconductor\b",
+        r"\bconductors\b",
+    ],
+
+    "dimensions": [
+        r"\bdimension",
+        r"\bdiameter\b",
+        r"\bthickness\b",
+        r"\bsize\b",
+        r"\bcross[- ]section",
+        r"\bmm2\b",
+        r"\bmm²\b",
+    ],
+
+    "temperature": [
+        r"\btemperature\b",
+        r"\bdegrees?\s*c\b",
+        r"\b°c\b",
+    ],
+
+    "frequency": [
+        r"\bfrequency\b",
+        r"\bhz\b",
+    ],
+
+    "power": [
+        r"\bpower\b",
+        r"\bwatt",
+        r"\bkw\b",
+    ],
+
+    "current": [
+        r"\bcurrent\b",
+        r"\bampere",
+        r"\bamps?\b",
+    ],
+
+    "efficiency": [
+        r"\befficiency\b",
+    ],
+
+    "mechanical": [
+        r"\bmechanical\b",
+        r"\btensile\b",
+        r"\bbending\b",
+        r"\bimpact\b",
     ],
 
     "environmental": [
-        r"\benvironment\b",
-        r"\benvironmental\b",
+        r"\benvironment",
         r"\bhumidity\b",
-        r"\bweather\b",
-        r"\bcorrosion\b",
-        r"\bwater resistant\b",
-        r"\bip\d{2}\b",
+        r"\bweather",
+        r"\buv resistant\b",
+    ],
+
+    "ingress_protection": [
+        r"\bingress\b",
+        r"\bip\s*\d{2}\b",
+        r"\bwaterproof\b",
+        r"\bdustproof\b",
     ],
 
     "product": [
-        r"\bproduct\b",
-        r"\bitem\b",
-        r"\bequipment\b",
-        r"\bcable\b",
-        r"\bdevice\b",
-        r"\bsystem\b",
+        r"\bproduct type\b",
+        r"\bproduct category\b",
+        r"\belectrical cable\b",
+        r"\bcable for building installation\b",
+        r"\bbuilding installation\b",
     ],
 }
 
 
 # =========================================================
-# VAGUE WORDING
+# VAGUE / INCOMPLETE PHRASES
 # =========================================================
 
 VAGUE_PHRASES = [
     "suitable",
     "adequate",
     "appropriate",
-    "proper",
     "good quality",
-    "high quality",
+    "standard quality",
     "as required",
     "as necessary",
-    "if required",
-    "where required",
-    "standard quality",
+    "necessary",
     "sufficient",
-    "acceptable",
+    "proper",
     "best quality",
-    "relevant standard",
-    "applicable standard",
     "to be specified",
-    "not specified",
-    "unspecified",
+    "to be decided",
+    "as applicable",
+    "vague wording",
+    "missing test method",
 ]
 
 
 # =========================================================
-# REQUIREMENT SIGNAL WORDS
+# REQUIREMENT SIGNALS
 # =========================================================
 
-REQUIREMENT_SIGNAL_WORDS = [
+REQUIREMENT_SIGNALS = [
     "shall",
     "must",
     "should",
     "required",
     "requirement",
-    "rated",
-    "rating",
     "comply",
     "compliance",
     "conform",
-    "tested",
-    "testing",
-    "certificate",
-    "minimum",
-    "maximum",
-    "not less than",
-    "not more than",
+    "conformance",
+    "withstand",
+    "rated",
+    "rating",
+    "provide",
+    "meet",
+    "specified",
 ]
 
 
@@ -242,40 +250,78 @@ REQUIREMENT_SIGNAL_WORDS = [
 CATEGORY_DISPLAY_NAMES = {
     "product": "Product type",
     "voltage": "Rated voltage",
-    "current": "Current rating",
-    "power": "Power requirement",
     "insulation": "Insulation",
     "fire_safety": "Fire performance",
     "testing": "Testing",
     "certification": "Certification",
-    "dimensions": "Dimensions",
-    "temperature": "Temperature requirement",
     "material": "Material",
-    "performance": "Performance",
-    "safety": "Safety requirement",
+    "construction": "Construction",
+    "conductor": "Conductor",
+    "dimensions": "Dimensions",
+    "temperature": "Temperature",
+    "frequency": "Frequency",
+    "power": "Power",
+    "current": "Current",
+    "efficiency": "Efficiency",
+    "mechanical": "Mechanical requirement",
     "environmental": "Environmental requirement",
+    "ingress_protection": "Ingress protection",
     "general_technical": "Technical requirement",
 }
 
 
 # =========================================================
-# CLEAN LINE
+# OCR INLINE TABLE SUPPORT
+# =========================================================
+
+INLINE_REQUIREMENT_LABELS = [
+    "fire performance",
+    "rated voltage",
+    "voltage rating",
+    "product type",
+    "product category",
+    "cable insulation",
+    "insulation",
+    "testing",
+    "certification",
+    "material",
+    "construction",
+    "conductor",
+    "dimensions",
+    "temperature",
+    "frequency",
+    "efficiency",
+    "current",
+    "power",
+    "quantity",
+]
+
+
+INLINE_NOTE_STARTS = [
+    "identify",
+    "preserve",
+    "wording",
+    "no test",
+    "commercial detail",
+    "flag for",
+]
+
+
+# =========================================================
+# BASIC TEXT CLEANING
 # =========================================================
 
 def clean_line(line):
-
     if not line:
         return ""
+
+    line = line.replace("\u2022", " ")
+    line = line.replace("\u2013", "-")
+    line = line.replace("\u2014", "-")
 
     line = re.sub(
         r"\s+",
         " ",
-        line.strip(),
-    )
-
-    line = re.sub(
-        r"^[•●▪■►➢➤✓✔]+\s*",
-        "",
         line,
     )
 
@@ -287,49 +333,54 @@ def clean_line(line):
 # =========================================================
 
 def is_page_marker(line):
-
     return bool(
         re.match(
             r"^---\s*PAGE\s+\d+\s*---$",
-            line,
+            line.strip(),
             flags=re.IGNORECASE,
         )
     )
 
 
 # =========================================================
-# REMOVE LIST PREFIX
+# REMOVE LIST / NUMBER PREFIX
 # =========================================================
 
-def remove_list_prefix(line):
+def remove_list_prefix(text):
+    text = clean_line(text)
 
-    line = re.sub(
-        r"^\s*\d+(\.\d+)*[\.\)]?\s*",
+    text = re.sub(
+        r"^[•*\-]+\s*",
         "",
-        line,
+        text,
     )
 
-    line = re.sub(
-        r"^\s*[A-Za-z][\.\)]\s+",
+    text = re.sub(
+        r"^\(?\d+\)?[.)]\s*",
         "",
-        line,
+        text,
     )
 
-    return line.strip()
+    return text.strip()
 
 
 # =========================================================
 # NORMALIZE HEADING
 # =========================================================
 
-def normalize_heading(line):
+def normalize_heading(text):
+    text = clean_line(text)
+
+    text = re.sub(
+        r"^\d+\.\s*",
+        "",
+        text,
+    )
 
     return (
-        remove_list_prefix(
-            clean_line(line)
-        )
+        text.strip()
+        .rstrip(":")
         .lower()
-        .strip(" :.-")
     )
 
 
@@ -337,26 +388,35 @@ def normalize_heading(line):
 # MEASUREMENT CHECK
 # =========================================================
 
-def looks_like_measurement(line):
-
-    lowered = clean_line(
-        line
-    ).lower()
-
-    unit_pattern = (
-        r"^\d+(\.\d+)?\s*"
-        r"(kv|v|volt|volts|amp|amps|ampere|a|"
-        r"kw|w|watt|watts|mm|cm|m|metre|meter|"
-        r"hz|mhz|ghz|kg|g|°c|celsius|%)\b"
-    )
+def looks_like_measurement(text):
+    text = clean_line(text)
 
     return bool(
-        re.search(
-            unit_pattern,
-            lowered,
+        re.match(
+            r"^\d+(?:\.\d+)?\s*"
+            r"(?:v|kv|mv|a|ma|ka|w|kw|mw|hz|khz|mhz|"
+            r"mm|cm|m|kg|g|°c|c)\b",
+            text,
             flags=re.IGNORECASE,
         )
     )
+
+
+# =========================================================
+# REQUIREMENT SIGNAL CHECK
+# =========================================================
+
+def contains_requirement_signal(text):
+    lower_text = clean_line(text).lower()
+
+    for signal in REQUIREMENT_SIGNALS:
+        if re.search(
+            r"\b" + re.escape(signal) + r"\b",
+            lower_text,
+        ):
+            return True
+
+    return False
 
 
 # =========================================================
@@ -364,39 +424,30 @@ def looks_like_measurement(line):
 # =========================================================
 
 def is_numbered_section_heading(line):
-
-    cleaned = clean_line(
-        line
-    )
-
-    if looks_like_measurement(
-        cleaned
-    ):
-        return False
+    line = clean_line(line)
 
     if not re.match(
-        r"^\d+(\.\d+)*[\.\)]?\s+[A-Za-z]",
-        cleaned,
+        r"^\d+\.\s+",
+        line,
     ):
         return False
 
-    body = remove_list_prefix(
-        cleaned
-    )
-
-    if ":" in body:
+    if looks_like_measurement(line):
         return False
 
-    lowered = body.lower()
+    content = re.sub(
+        r"^\d+\.\s+",
+        "",
+        line,
+    ).strip()
 
-    for signal in REQUIREMENT_SIGNAL_WORDS:
+    if ":" in content:
+        return False
 
-        if signal in lowered:
-            return False
+    if contains_requirement_signal(content):
+        return False
 
-    if len(
-        body.split()
-    ) > 10:
+    if len(content.split()) > 10:
         return False
 
     return True
@@ -406,78 +457,39 @@ def is_numbered_section_heading(line):
 # FIND TECHNICAL SECTION
 # =========================================================
 
-def find_technical_section(lines):
+def find_technical_section(text):
+    lines = [
+        clean_line(line)
+        for line in text.splitlines()
+    ]
 
-    start = None
+    start_index = None
 
-    for index, line in enumerate(
-        lines
-    ):
+    for index, line in enumerate(lines):
+        if not line:
+            continue
 
-        heading = normalize_heading(
-            line
-        )
+        normalized = normalize_heading(line)
 
-        if heading in TECHNICAL_SECTION_NAMES:
-
-            start = index + 1
-
+        if normalized in TECHNICAL_SECTION_NAMES:
+            start_index = index + 1
             break
 
+    if start_index is None:
+        return text
 
-    # No technical section found.
-    # Use complete document as fallback.
-    if start is None:
+    collected = []
 
-        return lines, False
-
-
-    end = len(
-        lines
-    )
-
-
-    for index in range(
-        start,
-        len(lines),
-    ):
-
-        line = lines[
-            index
-        ]
-
-
-        if is_numbered_section_heading(
+    for line in lines[start_index:]:
+        if (
             line
+            and is_numbered_section_heading(line)
         ):
-
-            heading = normalize_heading(
-                line
-            )
-
-            if heading not in TECHNICAL_SECTION_NAMES:
-
-                end = index
-
-                break
-
-
-        elif (
-            normalize_heading(
-                line
-            )
-            in SECTION_HEADINGS
-        ):
-
-            end = index
-
             break
 
+        collected.append(line)
 
-    return (
-        lines[start:end],
-        True,
-    )
+    return "\n".join(collected)
 
 
 # =========================================================
@@ -485,21 +497,12 @@ def find_technical_section(lines):
 # =========================================================
 
 def is_commercial_requirement(text):
-
-    lowered = text.lower().strip()
+    lower_text = clean_line(text).lower()
 
     for keyword in COMMERCIAL_KEYWORDS:
-
-        pattern = (
-            r"\b"
-            + re.escape(keyword)
-            + r"\b"
-        )
-
         if re.search(
-            pattern,
-            lowered,
-            flags=re.IGNORECASE,
+            r"\b" + re.escape(keyword) + r"\b",
+            lower_text,
         ):
             return True
 
@@ -507,89 +510,40 @@ def is_commercial_requirement(text):
 
 
 # =========================================================
-# CATEGORY CLASSIFICATION
+# CLASSIFY REQUIREMENT
 # =========================================================
 
 def classify_requirement(text):
+    lower_text = clean_line(text).lower()
 
-    lowered = text.lower()
-
-    scores = {}
-
-    for (
-        category,
-        patterns,
-    ) in TECHNICAL_CATEGORY_PATTERNS.items():
-
-        score = 0
-
+    for category, patterns in CATEGORY_PATTERNS.items():
         for pattern in patterns:
-
             if re.search(
                 pattern,
-                lowered,
+                lower_text,
                 flags=re.IGNORECASE,
             ):
+                return category
 
-                score += 1
-
-
-        if score > 0:
-
-            scores[
-                category
-            ] = score
-
-
-    if not scores:
-
-        return (
-            "general_technical"
-        )
-
-
-    return max(
-        scores,
-        key=scores.get,
-    )
+    return "general_technical"
 
 
 # =========================================================
-# STRUCTURED CATEGORY CLASSIFICATION
+# STRUCTURED CLASSIFICATION
 # =========================================================
 
 def classify_structured_requirement(
-    name,
+    requirement_name,
     value,
 ):
-
-    # Requirement name receives priority.
-    #
-    # Example:
-    # Product type
-    # Low-voltage cable
-    #
-    # should remain PRODUCT,
-    # not become VOLTAGE.
-
-    name_category = (
-        classify_requirement(
-            name
-        )
+    name_category = classify_requirement(
+        requirement_name
     )
 
-
-    if (
-        name_category
-        != "general_technical"
-    ):
-
+    if name_category != "general_technical":
         return name_category
 
-
-    return classify_requirement(
-        f"{name} {value}"
-    )
+    return classify_requirement(value)
 
 
 # =========================================================
@@ -597,50 +551,12 @@ def classify_structured_requirement(
 # =========================================================
 
 def has_technical_signal(text):
-
-    lowered = text.lower()
-
-
-    for patterns in (
-        TECHNICAL_CATEGORY_PATTERNS.values()
-    ):
-
-        for pattern in patterns:
-
-            if re.search(
-                pattern,
-                lowered,
-                flags=re.IGNORECASE,
-            ):
-
-                return True
-
-
-    for signal in REQUIREMENT_SIGNAL_WORDS:
-
-        if signal in lowered:
-
-            return True
-
-
-    unit_pattern = (
-        r"\b\d+(\.\d+)?\s*"
-        r"(kv|v|volt|volts|amp|amps|ampere|"
-        r"kw|w|watt|watts|mm|cm|hz|mhz|ghz|"
-        r"kg|g|°c|celsius|%)\b"
-    )
-
-
-    if re.search(
-        unit_pattern,
-        lowered,
-        flags=re.IGNORECASE,
-    ):
-
+    if contains_requirement_signal(text):
         return True
 
+    category = classify_requirement(text)
 
-    return False
+    return category != "general_technical"
 
 
 # =========================================================
@@ -648,65 +564,32 @@ def has_technical_signal(text):
 # =========================================================
 
 def detect_vague_requirement(text):
+    lower_text = clean_line(text).lower()
 
-    lowered = text.lower()
-
-    found = []
-
+    detected = []
 
     for phrase in VAGUE_PHRASES:
-
-        if phrase in lowered:
-
-            found.append(
-                phrase
-            )
-
+        if phrase in lower_text:
+            detected.append(phrase)
 
     if (
-        "rating" in lowered
-        and not re.search(
-            r"\d",
-            lowered,
-        )
+        "rating" in lower_text
+        and not re.search(r"\d", lower_text)
     ):
-
-        found.append(
-            "rating without value"
+        detected.append(
+            "rating value missing"
         )
-
 
     if (
-        "no test method"
-        in lowered
+        "no test method" in lower_text
+        and "missing test method" not in detected
     ):
-
-        found.append(
+        detected.append(
             "missing test method"
         )
 
-
-    if (
-        "no rating"
-        in lowered
-    ):
-
-        found.append(
-            "missing rating"
-        )
-
-
-    if "vague" in lowered:
-
-        found.append(
-            "vague wording"
-        )
-
-
     return list(
-        dict.fromkeys(
-            found
-        )
+        dict.fromkeys(detected)
     )
 
 
@@ -715,29 +598,30 @@ def detect_vague_requirement(text):
 # =========================================================
 
 def normalize_requirement_name(
-    raw_name,
+    requirement_name,
     category,
 ):
-
-    raw_name = (
-        remove_list_prefix(
-            clean_line(
-                raw_name
-            )
-        )
-        .strip(" :-")
+    requirement_name = clean_line(
+        requirement_name
     )
 
-
     if (
-        raw_name
-        and len(
-            raw_name
-        ) <= 80
+        requirement_name
+        and requirement_name.lower()
+        not in [
+            "technical requirement",
+            "requirement",
+        ]
     ):
+        if len(requirement_name.split()) <= 6:
+            category_display = (
+                CATEGORY_DISPLAY_NAMES.get(
+                    category
+                )
+            )
 
-        return raw_name
-
+            if category_display:
+                return category_display
 
     return CATEGORY_DISPLAY_NAMES.get(
         category,
@@ -746,102 +630,91 @@ def normalize_requirement_name(
 
 
 # =========================================================
-# CREATE REQUIREMENT OBJECT
+# CREATE REQUIREMENT
 # =========================================================
 
 def create_requirement(
     requirement_id,
-    name,
+    requirement_name,
     value,
-    category,
-    source_text,
-    source_note="",
+    notes="",
+    category=None,
+    source_text=None,
 ):
+    requirement_name = clean_line(
+        requirement_name
+    )
 
-    evaluation_text = (
-        f"{source_text} "
-        f"{source_note}"
-    ).strip()
+    value = clean_line(value)
+    notes = clean_line(notes)
 
+    if category is None:
+        category = (
+            classify_structured_requirement(
+                requirement_name,
+                value,
+            )
+        )
 
-    vague_terms = (
-        detect_vague_requirement(
-            evaluation_text
+    normalized_name = (
+        normalize_requirement_name(
+            requirement_name,
+            category,
         )
     )
 
+    if source_text is None:
+        if requirement_name and value:
+            source_text = (
+                f"{requirement_name}. "
+                f"{value}"
+            )
+        else:
+            source_text = (
+                value
+                or requirement_name
+            )
 
-    if vague_terms:
+    source_text = clean_line(
+        source_text
+    )
 
-        status = (
-            "needs_clarification"
+    vague_phrases = (
+        detect_vague_requirement(
+            " ".join(
+                [
+                    source_text,
+                    notes,
+                ]
+            )
         )
+    )
 
+    if vague_phrases:
+        status = "needs_clarification"
     else:
-
         status = "clear"
 
-
-    if source_note:
-
-        notes = (
-            source_note.strip()
-        )
-
-    elif vague_terms:
-
-        notes = (
-            "Potentially vague wording detected: "
-            + ", ".join(
-                vague_terms
+    if not notes:
+        if vague_phrases:
+            notes = (
+                "Potentially vague wording detected: "
+                + ", ".join(vague_phrases)
             )
-        )
-
-    else:
-
-        notes = (
-            "Extracted from procurement specification"
-        )
-
+        else:
+            notes = (
+                "Extracted from procurement specification"
+            )
 
     return {
-
-        "id": (
-            f"R{requirement_id}"
-        ),
-
-        "requirement": (
-            normalize_requirement_name(
-                name,
-                category,
-            )
-        ),
-
-        "value": (
-            value.strip()
-            if value
-            else source_text.strip()
-        ),
-
-        "notes": (
-            notes
-        ),
-
-        "type": (
-            "technical"
-        ),
-
-        "status": (
-            status
-        ),
-
-        "category": (
-            category
-        ),
-
-        "source_text": (
-            source_text.strip()
-        ),
+        "id": requirement_id,
+        "requirement": normalized_name,
+        "value": value,
+        "notes": notes,
+        "type": "technical",
+        "status": status,
+        "category": category,
+        "source_text": source_text,
     }
 
 
@@ -850,239 +723,480 @@ def create_requirement(
 # =========================================================
 
 def is_requirement_id(line):
-
     return bool(
         re.fullmatch(
-            r"(?:R|REQ|TR)[-_ ]?\d+",
-            clean_line(
-                line
-            ),
+            r"R\d+",
+            clean_line(line),
             flags=re.IGNORECASE,
         )
     )
 
 
 # =========================================================
-# EXTRACT STRUCTURED R1 / R2 / R3 BLOCKS
+# OCR INLINE ROW NORMALIZER
 # =========================================================
 
-def extract_structured_blocks(lines):
+def normalize_inline_ocr_rows(text):
+    if not text:
+        return text
 
-    blocks = []
+    lines = text.splitlines()
 
-    index = 0
+    output_lines = []
 
+    current_row = None
 
-    while index < len(
-        lines
-    ):
+    def flush_row(row_text):
+        if not row_text:
+            return
 
-        if not is_requirement_id(
-            lines[index]
+        row_text = re.sub(
+            r"\s+",
+            " ",
+            row_text,
+        ).strip()
+
+        match = re.match(
+            r"^(R\d+)\s+(.+)$",
+            row_text,
+            flags=re.IGNORECASE,
+        )
+
+        if not match:
+            output_lines.append(
+                row_text
+            )
+            return
+
+        requirement_id = (
+            match.group(1).upper()
+        )
+
+        body = (
+            match.group(2).strip()
+        )
+
+        body_lower = body.lower()
+
+        detected_label = None
+
+        for label in sorted(
+            INLINE_REQUIREMENT_LABELS,
+            key=len,
+            reverse=True,
         ):
+            if (
+                body_lower == label
+                or body_lower.startswith(
+                    label + " "
+                )
+            ):
+                detected_label = label
+                break
 
-            index += 1
+        if detected_label is None:
+            output_lines.append(
+                row_text
+            )
+            return
+
+        remaining_text = (
+            body[
+                len(detected_label):
+            ].strip()
+        )
+
+        value = remaining_text
+        notes = ""
+
+        remaining_lower = (
+            remaining_text.lower()
+        )
+
+        note_position = None
+
+        for marker in INLINE_NOTE_STARTS:
+            marker_match = re.search(
+                r"\b"
+                + re.escape(marker)
+                + r"\b",
+                remaining_lower,
+            )
+
+            if marker_match:
+                position = marker_match.start()
+
+                if (
+                    note_position is None
+                    or position < note_position
+                ):
+                    note_position = position
+
+        if note_position is not None:
+            value = (
+                remaining_text[
+                    :note_position
+                ].strip(
+                    " |;-"
+                )
+            )
+
+            notes = (
+                remaining_text[
+                    note_position:
+                ].strip()
+            )
+
+        label_display = {
+            "product type": "Product type",
+            "product category": "Product type",
+            "rated voltage": "Rated voltage",
+            "voltage rating": "Rated voltage",
+            "insulation": "Insulation",
+            "cable insulation": "Insulation",
+            "fire performance": "Fire performance",
+            "testing": "Testing",
+            "quantity": "Quantity",
+        }.get(
+            detected_label,
+            detected_label.title(),
+        )
+
+        output_lines.append(
+            requirement_id
+        )
+
+        output_lines.append(
+            label_display
+        )
+
+        if value:
+            output_lines.append(
+                value
+            )
+
+        if notes:
+            output_lines.append(
+                notes
+            )
+
+    for raw_line in lines:
+        line = raw_line.strip()
+
+        if not line:
+            if current_row:
+                flush_row(
+                    current_row
+                )
+
+                current_row = None
+
+            output_lines.append("")
+            continue
+
+        # R1 Product type ...
+        if re.match(
+            r"^R\d+\s+\S",
+            line,
+            flags=re.IGNORECASE,
+        ):
+            if current_row:
+                flush_row(
+                    current_row
+                )
+
+            current_row = line
+            continue
+
+        # New numbered document section
+        if re.match(
+            r"^\d+\.\s+",
+            line,
+        ):
+            if current_row:
+                flush_row(
+                    current_row
+                )
+
+                current_row = None
+
+            output_lines.append(
+                line
+            )
 
             continue
 
-
-        next_index = (
-            index + 1
-        )
-
-        block_lines = []
-
-
-        while (
-            next_index
-            < len(lines)
-            and not is_requirement_id(
-                lines[next_index]
-            )
-        ):
-
-            block_lines.append(
-                clean_line(
-                    lines[
-                        next_index
-                    ]
-                )
+        # Continuation line from OCR table
+        if current_row:
+            current_row += (
+                " " + line
             )
 
-            next_index += 1
+            continue
 
-
-        block_lines = [
+        output_lines.append(
             line
-            for line
-            in block_lines
-            if line
-        ]
-
-
-        # Expected structure:
-        #
-        # R1
-        # Product type
-        # Electrical cable...
-        # Note / explanation
-
-        if len(
-            block_lines
-        ) >= 2:
-
-            name = (
-                block_lines[
-                    0
-                ]
-            )
-
-            value = (
-                block_lines[
-                    1
-                ]
-            )
-
-            note = " ".join(
-                block_lines[
-                    2:
-                ]
-            ).strip()
-
-
-            combined_text = (
-                f"{name} "
-                f"{value} "
-                f"{note}"
-            ).strip()
-
-
-            # Exclude Quantity / price / commercial blocks.
-            if (
-                not is_commercial_requirement(
-                    name
-                )
-                and
-                not is_commercial_requirement(
-                    combined_text
-                )
-            ):
-
-                category = (
-                    classify_structured_requirement(
-                        name,
-                        value,
-                    )
-                )
-
-
-                if (
-                    category
-                    != "general_technical"
-                    or
-                    has_technical_signal(
-                        combined_text
-                    )
-                ):
-
-                    blocks.append(
-                        (
-                            name,
-                            value,
-                            note,
-                            category,
-                        )
-                    )
-
-
-        index = (
-            next_index
         )
 
+    if current_row:
+        flush_row(
+            current_row
+        )
 
-    return blocks
+    return "\n".join(
+        output_lines
+    )
 
 
 # =========================================================
-# KEY : VALUE PARSER
+# EXTRACT STRUCTURED R-BLOCKS
+# =========================================================
+
+def extract_structured_blocks(text):
+    lines = [
+        clean_line(line)
+        for line in text.splitlines()
+    ]
+
+    blocks = []
+
+    current = None
+
+    for line in lines:
+        if not line:
+            continue
+
+        if is_page_marker(line):
+            continue
+
+        if is_requirement_id(line):
+            if current:
+                blocks.append(
+                    current
+                )
+
+            current = {
+                "id": line.upper(),
+                "lines": [],
+            }
+
+            continue
+
+        if current:
+            current["lines"].append(
+                line
+            )
+
+    if current:
+        blocks.append(
+            current
+        )
+
+    requirements = []
+
+    for block in blocks:
+        block_lines = (
+            block["lines"]
+        )
+
+        if len(block_lines) < 2:
+            continue
+
+        requirement_name = (
+            block_lines[0]
+        )
+
+        value = (
+            block_lines[1]
+        )
+
+        notes = ""
+
+        if len(block_lines) >= 3:
+            notes = " ".join(
+                block_lines[2:]
+            )
+
+        # =================================================
+        # NORMAL PDF / OCR LINE-WRAP REPAIR
+        #
+        # These two layouts are both supported:
+        #
+        # Layout A:
+        # Supplier shall provide test
+        # documentation
+        # Identify what evidence...
+        #
+        # Layout B:
+        # Supplier shall provide test
+        # Identify what evidence...
+        # documentation
+        # =================================================
+
+        if (
+            requirement_name.strip().lower()
+            == "testing"
+            and value.strip().lower().endswith(
+                "test"
+            )
+        ):
+            cleaned_notes = (
+                notes.strip()
+            )
+
+            # ---------------------------------------------
+            # documentation appears at START of notes
+            # ---------------------------------------------
+            if re.match(
+                r"^documentation\b",
+                cleaned_notes,
+                flags=re.IGNORECASE,
+            ):
+                value = (
+                    value.strip()
+                    + " documentation"
+                )
+
+                notes = re.sub(
+                    r"^documentation\b[\s|;:,-]*",
+                    "",
+                    cleaned_notes,
+                    count=1,
+                    flags=re.IGNORECASE,
+                ).strip()
+
+            # ---------------------------------------------
+            # documentation appears at END of notes
+            # ---------------------------------------------
+            elif re.search(
+                r"\bdocumentation\s*$",
+                cleaned_notes,
+                flags=re.IGNORECASE,
+            ):
+                value = (
+                    value.strip()
+                    + " documentation"
+                )
+
+                notes = re.sub(
+                    r"\s*documentation\s*$",
+                    "",
+                    cleaned_notes,
+                    flags=re.IGNORECASE,
+                ).strip()
+
+        combined_text = " ".join(
+            [
+                requirement_name,
+                value,
+                notes,
+            ]
+        )
+
+        if is_commercial_requirement(
+            combined_text
+        ):
+            continue
+
+        category = (
+            classify_structured_requirement(
+                requirement_name,
+                value,
+            )
+        )
+
+        source_text = (
+            f"{requirement_name}. "
+            f"{value}"
+        )
+
+        requirement = (
+            create_requirement(
+                requirement_id=block["id"],
+                requirement_name=(
+                    requirement_name
+                ),
+                value=value,
+                notes=notes,
+                category=category,
+                source_text=source_text,
+            )
+        )
+
+        requirements.append(
+            requirement
+        )
+
+    return requirements
+
+
+# =========================================================
+# KEY VALUE PARSER
 # =========================================================
 
 def parse_key_value_line(line):
+    line = remove_list_prefix(
+        line
+    )
 
+    # LABEL : VALUE
     match = re.match(
         r"^([^:]{2,80})\s*:\s*(.+)$",
         line,
     )
 
-
     if match:
-
         return (
             clean_line(
                 match.group(1)
             ),
-
             clean_line(
                 match.group(2)
             ),
         )
 
-
+    # LABEL - VALUE
     match = re.match(
-        r"^([A-Za-z][A-Za-z0-9 /()]{2,60})"
+        r"^([A-Za-z][A-Za-z0-9 /()&]{1,60})"
         r"\s+-\s+(.+)$",
         line,
     )
 
-
     if match:
-
         return (
             clean_line(
                 match.group(1)
             ),
-
             clean_line(
                 match.group(2)
             ),
         )
-
 
     return None
 
 
 # =========================================================
-# SENTENCE SPLITTER
+# SPLIT SENTENCES
 # =========================================================
 
 def split_sentences(text):
+    text = clean_line(
+        text
+    )
+
+    if not text:
+        return []
 
     parts = re.split(
-        r"(?<=[.!?;])\s+",
+        r"(?<=[.!?])\s+",
         text,
     )
 
-
-    sentences = []
-
-
-    for part in parts:
-
-        cleaned = clean_line(
-            part
-        )
-
-
-        if len(
-            cleaned
-        ) >= 8:
-
-            sentences.append(
-                cleaned
-            )
-
-
-    return sentences
+    return [
+        clean_line(part)
+        for part in parts
+        if clean_line(part)
+    ]
 
 
 # =========================================================
@@ -1092,224 +1206,101 @@ def split_sentences(text):
 def remove_duplicate_requirements(
     requirements,
 ):
-
     unique = []
 
     seen = set()
 
-
     for requirement in requirements:
-
-        fingerprint = (
-            requirement.get(
-                "requirement",
-                "",
-            )
-            .lower()
-            .strip(),
-
-            requirement.get(
-                "value",
-                "",
-            )
-            .lower()
-            .strip(),
+        signature = (
+            clean_line(
+                requirement.get(
+                    "source_text",
+                    "",
+                )
+            ).lower()
         )
 
+        if not signature:
+            signature = (
+                clean_line(
+                    requirement.get(
+                        "value",
+                        "",
+                    )
+                ).lower()
+            )
 
-        if fingerprint in seen:
-
+        if signature in seen:
             continue
 
-
-        seen.add(
-            fingerprint
-        )
-
+        seen.add(signature)
         unique.append(
             requirement
         )
-
-
-    # Renumber after filtering.
-    for index, requirement in enumerate(
-        unique,
-        start=1,
-    ):
-
-        requirement[
-            "id"
-        ] = f"R{index}"
-
 
     return unique
 
 
 # =========================================================
-# MAIN EXTRACTION FUNCTION
+# GENERIC FALLBACK EXTRACTION
 # =========================================================
 
-def extract_requirements(text):
-
-    if not text:
-
-        return []
-
-
-    # =====================================================
-    # CLEAN DOCUMENT
-    # =====================================================
-
-    lines = []
-
-
-    for raw_line in (
-        text.splitlines()
-    ):
-
-        line = clean_line(
-            raw_line
-        )
-
-
-        if not line:
-
-            continue
-
-
-        if is_page_marker(
-            line
-        ):
-
-            continue
-
-
-        lines.append(
-            line
-        )
-
-
-    # =====================================================
-    # FIND TECHNICAL SECTION
-    # =====================================================
-
-    (
-        candidate_lines,
-        technical_section_found,
-    ) = find_technical_section(
-        lines
-    )
-
-
-    # =====================================================
-    # FIRST CHOICE:
-    # STRUCTURED REQUIREMENT BLOCKS
-    #
-    # Example:
-    #
-    # R1
-    # Product type
-    # Electrical cable...
-    # Notes...
-    #
-    # =====================================================
-
-    structured_blocks = (
-        extract_structured_blocks(
-            candidate_lines
+def extract_generic_requirements(text):
+    section_text = (
+        find_technical_section(
+            text
         )
     )
 
-
-    if structured_blocks:
-
-        requirements = []
-
-
-        for (
-            index,
-            block,
-        ) in enumerate(
-            structured_blocks,
-            start=1,
-        ):
-
-            (
-                name,
-                value,
-                note,
-                category,
-            ) = block
-
-
-            requirements.append(
-                create_requirement(
-                    index,
-                    name,
-                    value,
-                    category,
-                    f"{name}. {value}",
-                    note,
-                )
-            )
-
-
-        return (
-            remove_duplicate_requirements(
-                requirements
-            )
-        )
-
-
-    # =====================================================
-    # FALLBACK:
-    # GENERAL TENDER TEXT
-    # =====================================================
+    lines = [
+        clean_line(line)
+        for line in section_text.splitlines()
+    ]
 
     requirements = []
 
-    counter = 1
+    next_id = 1
 
-
-    for original_line in (
-        candidate_lines
-    ):
-
-        line = remove_list_prefix(
-            original_line
-        )
-
-
+    for line in lines:
         if not line:
-
             continue
 
+        if is_page_marker(line):
+            continue
 
-        heading = normalize_heading(
-            line
+        normalized_heading = (
+            normalize_heading(
+                line
+            )
         )
-
 
         if (
-            heading
-            in TECHNICAL_SECTION_NAMES
-            or
-            heading
+            normalized_heading
             in SECTION_HEADINGS
         ):
-
             continue
 
-
-        if is_commercial_requirement(
+        if is_numbered_section_heading(
             line
         ):
-
             continue
 
+        cleaned_candidate = (
+            remove_list_prefix(
+                line
+            )
+        )
+
+        if not cleaned_candidate:
+            continue
+
+        if is_commercial_requirement(
+            cleaned_candidate
+        ):
+            continue
 
         # =================================================
-        # KEY : VALUE
+        # LABEL : VALUE
         # =================================================
 
         key_value = (
@@ -1318,82 +1309,75 @@ def extract_requirements(text):
             )
         )
 
-
         if key_value:
-
-            (
-                key,
-                value,
-            ) = key_value
-
-
-            combined_text = (
-                f"{key}. {value}"
+            label, value = (
+                key_value
             )
 
+            combined = (
+                f"{label} {value}"
+            )
 
-            if has_technical_signal(
-                combined_text
+            if is_commercial_requirement(
+                combined
             ):
+                continue
 
-                category = (
-                    classify_structured_requirement(
-                        key,
-                        value,
-                    )
+            category = (
+                classify_structured_requirement(
+                    label,
+                    value,
                 )
+            )
 
-
-                requirements.append(
-                    create_requirement(
-                        counter,
-                        key,
-                        value,
-                        category,
-                        combined_text,
-                    )
+            if (
+                category
+                == "general_technical"
+                and not has_technical_signal(
+                    combined
                 )
+            ):
+                continue
 
+            requirements.append(
+                create_requirement(
+                    requirement_id=(
+                        f"R{next_id}"
+                    ),
+                    requirement_name=(
+                        label
+                    ),
+                    value=value,
+                    category=category,
+                    source_text=(
+                        f"{label}. {value}"
+                    ),
+                )
+            )
 
-                counter += 1
-
-
+            next_id += 1
             continue
 
-
         # =================================================
-        # NORMAL SENTENCE
+        # NORMAL SENTENCES
         # =================================================
 
         sentences = (
             split_sentences(
-                line
+                cleaned_candidate
             )
         )
 
-
-        if not sentences:
-
-            sentences = [
-                line
-            ]
-
-
         for sentence in sentences:
-
             if is_commercial_requirement(
                 sentence
             ):
-
                 continue
-
 
             if not has_technical_signal(
                 sentence
             ):
-
                 continue
-
 
             category = (
                 classify_requirement(
@@ -1401,23 +1385,72 @@ def extract_requirements(text):
                 )
             )
 
-
-            requirements.append(
-                create_requirement(
-                    counter,
-                    "",
-                    sentence,
+            requirement_name = (
+                CATEGORY_DISPLAY_NAMES.get(
                     category,
-                    sentence,
+                    "Technical requirement",
                 )
             )
 
+            requirements.append(
+                create_requirement(
+                    requirement_id=(
+                        f"R{next_id}"
+                    ),
+                    requirement_name=(
+                        requirement_name
+                    ),
+                    value=sentence,
+                    category=category,
+                    source_text=sentence,
+                )
+            )
 
-            counter += 1
+            next_id += 1
+
+    return remove_duplicate_requirements(
+        requirements
+    )
 
 
-    return (
-        remove_duplicate_requirements(
-            requirements
+# =========================================================
+# MAIN EXTRACTION FUNCTION
+# =========================================================
+
+def extract_requirements(text):
+    if not text:
+        return []
+
+    # OCR table rows:
+    # R1 Product type ...
+    # ->
+    # R1
+    # Product type
+    # ...
+    text = normalize_inline_ocr_rows(
+        text
+    )
+
+    # Work primarily inside technical section.
+    technical_text = (
+        find_technical_section(
+            text
         )
+    )
+
+    # First try R1 / R2 / R3 structured format.
+    structured_requirements = (
+        extract_structured_blocks(
+            technical_text
+        )
+    )
+
+    if structured_requirements:
+        return remove_duplicate_requirements(
+            structured_requirements
+        )
+
+    # Fallback for generic procurement specifications.
+    return extract_generic_requirements(
+        text
     )

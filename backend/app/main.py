@@ -18,7 +18,8 @@ from datetime import datetime, timezone
 # =========================================================
 
 from app.services.pdf_service import (
-    extract_pdf_text,
+    extract_pdf_text_with_ocr,
+    count_meaningful_characters,
 )
 
 from app.services.requirement_service import (
@@ -42,11 +43,42 @@ from app.services.database_service import (
 
 
 # =========================================================
-# MATCHER VERSION
+# CONSTANTS
 # =========================================================
 
-MATCHER_VERSION = (
-    "HYBRID_KEYWORD_SEMANTIC_V1"
+MATCHER_VERSION = "HYBRID_KEYWORD_SEMANTIC_V1"
+
+MIN_USABLE_TEXT_LENGTH = 50
+
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+UPLOAD_FOLDER = "app/uploads"
+
+REPORT_FOLDER = "app/reports"
+
+
+# =========================================================
+# FASTAPI APP
+# =========================================================
+
+app = FastAPI(
+    title="PROCURAI",
+    description=(
+        "AI-Powered Procurement Specification Analysis "
+        "and Indian Standards Recommendation System"
+    ),
+    version="0.6.0",
+)
+
+
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True,
+)
+
+os.makedirs(
+    REPORT_FOLDER,
+    exist_ok=True,
 )
 
 
@@ -60,6 +92,7 @@ def get_document_status(
     no_match_count,
     needs_clarification_count,
 ):
+
     if no_match_count > 0:
         return "INCOMPLETE_MATCHING"
 
@@ -85,6 +118,7 @@ def calculate_review_risk(
     no_match_count,
     needs_clarification_count,
 ):
+
     if total_requirements == 0:
         return 0
 
@@ -120,6 +154,7 @@ def calculate_review_risk(
 def get_review_risk_level(
     review_risk_score,
 ):
+
     if review_risk_score >= 60:
         return "HIGH"
 
@@ -138,6 +173,7 @@ def get_document_review_reasons(
     no_match_count,
     needs_clarification_count,
 ):
+
     reasons = []
 
     if human_review_count > 0:
@@ -167,73 +203,44 @@ def get_document_review_reasons(
 
 
 # =========================================================
-# FASTAPI APPLICATION
-# =========================================================
-
-app = FastAPI(
-    title="PROCURAI",
-    description=(
-        "AI-Powered Procurement Specification Analysis "
-        "and Indian Standards Recommendation System"
-    ),
-    version="0.4.0",
-)
-
-
-# =========================================================
-# CONFIGURATION
-# =========================================================
-
-UPLOAD_FOLDER = "app/uploads"
-
-REPORT_FOLDER = "app/reports"
-
-MAX_FILE_SIZE = (
-    10 * 1024 * 1024
-)
-
-MIN_TEXT_LENGTH = 50
-
-
-os.makedirs(
-    UPLOAD_FOLDER,
-    exist_ok=True,
-)
-
-os.makedirs(
-    REPORT_FOLDER,
-    exist_ok=True,
-)
-
-
-# =========================================================
 # HOME
 # =========================================================
 
 @app.get("/")
 def home():
+
     return {
         "project": "PROCURAI",
+
         "status": "Backend is running",
+
         "database": "PostgreSQL",
+
         "matching_engine": (
             "Hybrid Keyword + Semantic AI"
         ),
+
         "matcher_version": (
             MATCHER_VERSION
         ),
+
+        "pdf_processing": (
+            "Native PDF text extraction "
+            "+ automatic Tesseract OCR fallback"
+        ),
+
+        "ocr_engine": "Tesseract OCR",
     }
 
 
 # =========================================================
-# GET STANDARDS FROM POSTGRESQL
+# STANDARDS
 # =========================================================
 
 @app.get("/standards")
 def get_standards():
-    standards = (
-        load_standards()
-    )
+
+    standards = load_standards()
 
     return {
         "count": len(standards),
@@ -242,26 +249,26 @@ def get_standards():
 
 
 # =========================================================
-# GET ALL REPORTS FROM POSTGRESQL
+# REPORT LIST
 # =========================================================
 
 @app.get("/reports")
 def list_reports():
+
     return (
         list_reports_from_database()
     )
 
 
 # =========================================================
-# GET ONE REPORT FROM POSTGRESQL
+# GET REPORT
 # =========================================================
 
-@app.get(
-    "/reports/{analysis_id}"
-)
+@app.get("/reports/{analysis_id}")
 def get_report(
     analysis_id: str,
 ):
+
     report = (
         get_report_from_database(
             analysis_id
@@ -269,6 +276,7 @@ def get_report(
     )
 
     if report is None:
+
         raise HTTPException(
             status_code=404,
             detail="Report not found",
@@ -278,15 +286,14 @@ def get_report(
 
 
 # =========================================================
-# DELETE REPORT FROM POSTGRESQL
+# DELETE REPORT
 # =========================================================
 
-@app.delete(
-    "/reports/{analysis_id}"
-)
+@app.delete("/reports/{analysis_id}")
 def delete_report(
     analysis_id: str,
 ):
+
     deleted = (
         delete_report_from_database(
             analysis_id
@@ -294,31 +301,33 @@ def delete_report(
     )
 
     if not deleted:
+
         raise HTTPException(
             status_code=404,
             detail="Report not found",
         )
 
-    # ---------------------------------------------
-    # DELETE LOCAL JSON BACKUP ALSO
-    # ---------------------------------------------
 
     report_path = os.path.join(
         REPORT_FOLDER,
         f"{analysis_id}.json",
     )
 
+
     if os.path.exists(
         report_path
     ):
+
         os.remove(
             report_path
         )
+
 
     return {
         "status": (
             "Report deleted successfully"
         ),
+
         "analysis_id": (
             analysis_id
         ),
@@ -326,7 +335,7 @@ def delete_report(
 
 
 # =========================================================
-# PDF UPLOAD + AI ANALYSIS
+# UPLOAD + ANALYSIS
 # =========================================================
 
 @app.post("/upload")
@@ -335,10 +344,11 @@ async def upload_pdf(
 ):
 
     # =====================================================
-    # 1. CHECK FILENAME
+    # 1. VALIDATE FILENAME
     # =====================================================
 
     if not file.filename:
+
         raise HTTPException(
             status_code=400,
             detail="Filename is missing",
@@ -346,12 +356,13 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 2. PDF EXTENSION CHECK
+    # 2. VALIDATE EXTENSION
     # =====================================================
 
     if not file.filename.lower().endswith(
         ".pdf"
     ):
+
         raise HTTPException(
             status_code=400,
             detail=(
@@ -371,24 +382,43 @@ async def upload_pdf(
     )
 
 
+    # Avoid overwriting another upload
+    stored_filename = (
+        f"{uuid.uuid4()}_"
+        f"{safe_filename}"
+    )
+
+
     file_path = os.path.join(
         UPLOAD_FOLDER,
-        safe_filename,
+        stored_filename,
     )
 
 
     # =====================================================
-    # 4. SAVE UPLOADED PDF
+    # 4. SAVE FILE
     # =====================================================
 
-    with open(
-        file_path,
-        "wb",
-    ) as buffer:
+    try:
 
-        shutil.copyfileobj(
-            file.file,
-            buffer,
+        with open(
+            file_path,
+            "wb",
+        ) as buffer:
+
+            shutil.copyfileobj(
+                file.file,
+                buffer,
+            )
+
+    except Exception as exc:
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Unable to save uploaded PDF: "
+                f"{str(exc)}"
+            ),
         )
 
 
@@ -403,15 +433,14 @@ async def upload_pdf(
     )
 
 
-    # =====================================================
-    # 6. EMPTY FILE CHECK
-    # =====================================================
-
     if file_size == 0:
 
-        os.remove(
+        if os.path.exists(
             file_path
-        )
+        ):
+            os.remove(
+                file_path
+            )
 
         raise HTTPException(
             status_code=400,
@@ -421,15 +450,14 @@ async def upload_pdf(
         )
 
 
-    # =====================================================
-    # 7. FILE SIZE LIMIT
-    # =====================================================
-
     if file_size > MAX_FILE_SIZE:
 
-        os.remove(
+        if os.path.exists(
             file_path
-        )
+        ):
+            os.remove(
+                file_path
+            )
 
         raise HTTPException(
             status_code=400,
@@ -441,7 +469,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 8. PDF SIGNATURE CHECK
+    # 6. PDF SIGNATURE
     # =====================================================
 
     with open(
@@ -450,15 +478,20 @@ async def upload_pdf(
     ) as pdf_file:
 
         signature = (
-            pdf_file.read(5)
+            pdf_file.read(
+                5
+            )
         )
 
 
     if signature != b"%PDF-":
 
-        os.remove(
+        if os.path.exists(
             file_path
-        )
+        ):
+            os.remove(
+                file_path
+            )
 
         raise HTTPException(
             status_code=400,
@@ -467,28 +500,86 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 9. EXTRACT PDF TEXT
+    # 7. SMART PDF EXTRACTION
+    #
+    # Native text pages:
+    #   PyMuPDF
+    #
+    # Scanned pages:
+    #   Tesseract OCR
     # =====================================================
 
-    extracted_text = (
-        extract_pdf_text(
+    try:
+
+        (
+            extracted_text,
+            extraction_info,
+        ) = extract_pdf_text_with_ocr(
             file_path
+        )
+
+    except Exception as exc:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Unable to process PDF text/OCR: "
+                f"{str(exc)}"
+            ),
+        )
+
+
+    # =====================================================
+    # 8. MEANINGFUL CHARACTER COUNT
+    # =====================================================
+
+    meaningful_character_count = (
+        count_meaningful_characters(
+            extracted_text
         )
     )
 
 
-    clean_text = (
-        extracted_text.strip()
+    ocr_used = (
+        extraction_info.get(
+            "ocr_used",
+            False,
+        )
+    )
+
+
+    ocr_pages = (
+        extraction_info.get(
+            "ocr_pages",
+            [],
+        )
+    )
+
+
+    native_text_pages = (
+        extraction_info.get(
+            "native_text_pages",
+            [],
+        )
+    )
+
+
+    total_pages = (
+        extraction_info.get(
+            "total_pages",
+            0,
+        )
     )
 
 
     # =====================================================
-    # 10. OCR REQUIRED CHECK
+    # 9. STILL NO USABLE TEXT AFTER OCR
     # =====================================================
 
     if (
-        len(clean_text)
-        < MIN_TEXT_LENGTH
+        meaningful_character_count
+        <
+        MIN_USABLE_TEXT_LENGTH
     ):
 
         return {
@@ -497,26 +588,42 @@ async def upload_pdf(
             ),
 
             "status": (
-                "OCR_REQUIRED"
+                "INSUFFICIENT_TEXT_AFTER_OCR"
             ),
 
             "message": (
-                "Very little or no selectable "
-                "text was detected. "
-                "This PDF may be scanned "
-                "or image-based."
+                "The PDF contained too little "
+                "usable text even after OCR processing."
             ),
 
             "characters_extracted": (
-                len(clean_text)
+                meaningful_character_count
             ),
 
-            "ocr_required": True,
+            "ocr_required": (
+                ocr_used
+            ),
+
+            "ocr_used": (
+                ocr_used
+            ),
+
+            "ocr_pages": (
+                ocr_pages
+            ),
+
+            "native_text_pages": (
+                native_text_pages
+            ),
+
+            "total_pages": (
+                total_pages
+            ),
         }
 
 
     # =====================================================
-    # 11. REQUIREMENT EXTRACTION
+    # 10. REQUIREMENT EXTRACTION
     # =====================================================
 
     requirements = (
@@ -527,7 +634,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 12. NO REQUIREMENTS FOUND
+    # 11. NO REQUIREMENTS
     # =====================================================
 
     if len(requirements) == 0:
@@ -542,24 +649,41 @@ async def upload_pdf(
             ),
 
             "message": (
-                "Text was extracted from "
-                "the PDF, but no supported "
-                "technical requirements "
-                "were detected."
+                "Text was extracted successfully, "
+                "but no supported technical "
+                "requirements were detected."
             ),
 
             "characters_extracted": (
-                len(extracted_text)
+                meaningful_character_count
             ),
 
-            "ocr_required": False,
+            "ocr_required": (
+                ocr_used
+            ),
+
+            "ocr_used": (
+                ocr_used
+            ),
+
+            "ocr_pages": (
+                ocr_pages
+            ),
+
+            "native_text_pages": (
+                native_text_pages
+            ),
+
+            "total_pages": (
+                total_pages
+            ),
 
             "requirements_detected": 0,
         }
 
 
     # =====================================================
-    # 13. LOAD STANDARDS FROM POSTGRESQL
+    # 12. LOAD STANDARDS
     # =====================================================
 
     standards = (
@@ -568,6 +692,7 @@ async def upload_pdf(
 
 
     if len(standards) == 0:
+
         raise HTTPException(
             status_code=500,
             detail=(
@@ -578,8 +703,13 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 14. ANALYSIS METADATA
+    # 13. ANALYSIS METADATA
     # =====================================================
+
+    analysis_id = str(
+        uuid.uuid4()
+    )
+
 
     analysis_timestamp = (
         datetime.now(
@@ -588,13 +718,8 @@ async def upload_pdf(
     )
 
 
-    analysis_id = str(
-        uuid.uuid4()
-    )
-
-
     # =====================================================
-    # 15. RESULT COUNTERS
+    # 14. COUNTERS
     # =====================================================
 
     results = []
@@ -615,7 +740,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 16. ANALYZE EACH REQUIREMENT USING HYBRID AI
+    # 15. MATCH REQUIREMENTS
     # =====================================================
 
     for requirement in requirements:
@@ -629,85 +754,68 @@ async def upload_pdf(
 
 
         decision = (
-            match_result[
+            match_result.get(
                 "decision"
-            ]
+            )
         )
 
-
-        # -------------------------------------------------
-        # REQUIREMENT CLARIFICATION COUNT
-        # -------------------------------------------------
 
         if (
             requirement.get(
                 "status"
             )
-            == "needs_clarification"
+            ==
+            "needs_clarification"
         ):
+
             needs_clarification_count += 1
 
 
-        # -------------------------------------------------
-        # DECISION COUNTS
-        # -------------------------------------------------
+        if decision == "MATCH_FOUND":
 
-        if (
-            decision
-            == "MATCH_FOUND"
-        ):
             match_found_count += 1
 
 
         elif (
             decision
-            == "HUMAN_REVIEW_REQUIRED"
+            ==
+            "HUMAN_REVIEW_REQUIRED"
         ):
+
             human_review_count += 1
 
 
         elif (
             decision
-            == "NO_MATCH_FOUND"
+            ==
+            "NO_MATCH_FOUND"
         ):
+
             no_match_count += 1
 
 
-        # -------------------------------------------------
-        # REVIEW PRIORITY
-        # -------------------------------------------------
-
         review_priority = (
-            match_result[
-                "review_priority"
-            ]
+            match_result.get(
+                "review_priority",
+                "MEDIUM",
+            )
         )
 
 
-        if (
-            review_priority
-            == "HIGH"
-        ):
+        if review_priority == "HIGH":
+
             high_priority_count += 1
 
 
-        elif (
-            review_priority
-            == "MEDIUM"
-        ):
+        elif review_priority == "MEDIUM":
+
             medium_priority_count += 1
 
 
-        elif (
-            review_priority
-            == "LOW"
-        ):
+        elif review_priority == "LOW":
+
             low_priority_count += 1
 
-
-        # -------------------------------------------------
-        # ADD RESULT
-        # -------------------------------------------------
 
         results.append(
             {
@@ -720,21 +828,22 @@ async def upload_pdf(
                 ),
 
                 "decision_reason": (
-                    match_result[
+                    match_result.get(
                         "decision_reason"
-                    ]
+                    )
                 ),
 
                 "review_flags": (
-                    match_result[
-                        "review_flags"
-                    ]
+                    match_result.get(
+                        "review_flags",
+                        [],
+                    )
                 ),
 
                 "recommended_action": (
-                    match_result[
+                    match_result.get(
                         "recommended_action"
-                    ]
+                    )
                 ),
 
                 "review_priority": (
@@ -742,15 +851,16 @@ async def upload_pdf(
                 ),
 
                 "best_match": (
-                    match_result[
+                    match_result.get(
                         "best_match"
-                    ]
+                    )
                 ),
 
                 "all_matches": (
-                    match_result[
-                        "all_matches"
-                    ]
+                    match_result.get(
+                        "all_matches",
+                        [],
+                    )
                 ),
 
                 "match_method": (
@@ -764,7 +874,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 17. SORT RESULTS BY REVIEW PRIORITY
+    # 16. SORT RESULTS
     # =====================================================
 
     priority_order = {
@@ -777,9 +887,9 @@ async def upload_pdf(
     results.sort(
         key=lambda item: (
             priority_order.get(
-                item[
+                item.get(
                     "review_priority"
-                ],
+                ),
                 4,
             )
         )
@@ -787,7 +897,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 18. DOCUMENT STATUS
+    # 17. DOCUMENT STATUS
     # =====================================================
 
     document_status = (
@@ -801,7 +911,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 19. REVIEW RISK SCORE
+    # 18. REVIEW RISK
     # =====================================================
 
     review_risk_score = (
@@ -822,7 +932,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 20. DOCUMENT REVIEW REASONS
+    # 19. REVIEW REASONS
     # =====================================================
 
     document_review_reasons = (
@@ -835,7 +945,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 21. TOP PRIORITY ISSUES
+    # 20. TOP PRIORITY ISSUES
     # =====================================================
 
     top_priority_issues = []
@@ -844,45 +954,52 @@ async def upload_pdf(
     for item in results:
 
         if (
-            item[
+            item.get(
                 "review_priority"
-            ]
-            == "HIGH"
+            )
+            ==
+            "HIGH"
         ):
+
+            requirement_data = (
+                item.get(
+                    "requirement",
+                    {},
+                )
+            )
+
 
             top_priority_issues.append(
                 {
                     "requirement_id": (
-                        item[
-                            "requirement"
-                        ]["id"]
+                        requirement_data.get(
+                            "id"
+                        )
                     ),
 
                     "requirement": (
-                        item[
+                        requirement_data.get(
                             "requirement"
-                        ][
-                            "requirement"
-                        ]
+                        )
                     ),
 
                     "reason": (
-                        item[
+                        item.get(
                             "decision_reason"
-                        ]
+                        )
                     ),
 
                     "recommended_action": (
-                        item[
+                        item.get(
                             "recommended_action"
-                        ]
+                        )
                     ),
                 }
             )
 
 
     # =====================================================
-    # 22. ANALYSIS COMPLETION
+    # 21. COMPLETION PERCENTAGE
     # =====================================================
 
     analyzed_count = (
@@ -896,7 +1013,8 @@ async def upload_pdf(
         round(
             (
                 analyzed_count
-                / len(requirements)
+                /
+                len(requirements)
             )
             * 100,
             2,
@@ -905,7 +1023,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 23. SUMMARY
+    # 22. SUMMARY
     # =====================================================
 
     summary = {
@@ -945,7 +1063,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 24. FINAL RESPONSE
+    # 23. FINAL RESPONSE
     # =====================================================
 
     response_data = {
@@ -959,10 +1077,29 @@ async def upload_pdf(
         ),
 
         "characters_extracted": (
-            len(extracted_text)
+            meaningful_character_count
         ),
 
-        "ocr_required": False,
+        # True means OCR was needed for at least one page
+        "ocr_required": (
+            ocr_used
+        ),
+
+        "ocr_used": (
+            ocr_used
+        ),
+
+        "ocr_pages": (
+            ocr_pages
+        ),
+
+        "native_text_pages": (
+            native_text_pages
+        ),
+
+        "total_pages": (
+            total_pages
+        ),
 
         "analysis_id": (
             analysis_id
@@ -1015,7 +1152,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 25. SAVE ANALYSIS TO POSTGRESQL
+    # 24. POSTGRESQL
     # =====================================================
 
     database_result = (
@@ -1032,7 +1169,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 26. SAVE LOCAL JSON BACKUP
+    # 25. JSON BACKUP
     # =====================================================
 
     report_path = os.path.join(
@@ -1056,7 +1193,7 @@ async def upload_pdf(
 
 
     # =====================================================
-    # 27. RETURN RESPONSE
+    # 26. RETURN
     # =====================================================
 
     return response_data
