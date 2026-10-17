@@ -436,6 +436,7 @@ def list_reports_from_database():
                         if document
                         else None
                     ),
+                    "requirements_count": len(analysis.requirements),
                 }
             )
 
