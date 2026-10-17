@@ -11,45 +11,30 @@ from sqlalchemy import (
     String,
     Text,
 )
-
 from sqlalchemy.orm import relationship
 
 from app.database import Base
 
 
-# =========================================================
-# DOCUMENT
-# =========================================================
-
 class Document(Base):
     __tablename__ = "documents"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True,
-    )
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String(255), nullable=False)
+    file_size = Column(Integer, nullable=False)
+    characters_extracted = Column(Integer, nullable=True)
 
-    filename = Column(
-        String(255),
-        nullable=False,
-    )
+    # Backward-compatible field: True means at least one page needed OCR.
+    ocr_required = Column(Boolean, default=False, nullable=False)
 
-    file_size = Column(
-        Integer,
-        nullable=False,
-    )
-
-    characters_extracted = Column(
-        Integer,
-        nullable=True,
-    )
-
-    ocr_required = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-    )
+    # OCR Phase 2 metadata.
+    ocr_used = Column(Boolean, default=False, nullable=False)
+    ocr_pages = Column(JSON, nullable=True)
+    native_text_pages = Column(JSON, nullable=True)
+    total_pages = Column(Integer, nullable=True)
+    ocr_confidence = Column(Float, nullable=True)
+    low_confidence_pages = Column(JSON, nullable=True)
+    ocr_metadata = Column(JSON, nullable=True)
 
     uploaded_at = Column(
         DateTime(timezone=True),
@@ -64,85 +49,38 @@ class Document(Base):
     )
 
 
-# =========================================================
-# ANALYSIS
-# =========================================================
-
 class Analysis(Base):
     __tablename__ = "analyses"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True,
-    )
-
+    id = Column(Integer, primary_key=True, index=True)
     analysis_id = Column(
         String(100),
         unique=True,
         index=True,
         nullable=False,
     )
-
     document_id = Column(
         Integer,
-        ForeignKey(
-            "documents.id",
-            ondelete="CASCADE",
-        ),
+        ForeignKey("documents.id", ondelete="CASCADE"),
         nullable=False,
     )
-
     analysis_timestamp = Column(
         DateTime(timezone=True),
         nullable=False,
     )
-
-    matcher_version = Column(
-        String(100),
-        nullable=True,
-    )
-
-    document_status = Column(
-        String(100),
-        nullable=True,
-    )
-
-    review_risk_score = Column(
-        Float,
-        nullable=True,
-    )
-
-    review_risk_level = Column(
-        String(50),
-        nullable=True,
-    )
-
-    analysis_completion_percentage = Column(
-        Float,
-        nullable=True,
-    )
-
-    document_review_reasons = Column(
-        JSON,
-        nullable=True,
-    )
-
-    top_priority_issues = Column(
-        JSON,
-        nullable=True,
-    )
-
-    summary = Column(
-        JSON,
-        nullable=True,
-    )
+    matcher_version = Column(String(100), nullable=True)
+    document_status = Column(String(100), nullable=True)
+    review_risk_score = Column(Float, nullable=True)
+    review_risk_level = Column(String(50), nullable=True)
+    analysis_completion_percentage = Column(Float, nullable=True)
+    document_review_reasons = Column(JSON, nullable=True)
+    top_priority_issues = Column(JSON, nullable=True)
+    summary = Column(JSON, nullable=True)
 
     document = relationship(
         "Document",
         back_populates="analyses",
     )
-
     requirements = relationship(
         "Requirement",
         back_populates="analysis",
@@ -150,106 +88,35 @@ class Analysis(Base):
     )
 
 
-# =========================================================
-# REQUIREMENT
-# =========================================================
-
 class Requirement(Base):
     __tablename__ = "requirements"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True,
-    )
-
+    id = Column(Integer, primary_key=True, index=True)
     analysis_db_id = Column(
         Integer,
-        ForeignKey(
-            "analyses.id",
-            ondelete="CASCADE",
-        ),
+        ForeignKey("analyses.id", ondelete="CASCADE"),
         nullable=False,
     )
+    requirement_code = Column(String(50), nullable=False)
+    requirement_name = Column(String(255), nullable=False)
+    value = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    requirement_type = Column(String(100), nullable=True)
+    status = Column(String(100), nullable=True)
 
-    requirement_code = Column(
-        String(50),
-        nullable=False,
-    )
+    category = Column(String(100), nullable=True)
+    source_text = Column(Text, nullable=True)
 
-    requirement_name = Column(
-        String(255),
-        nullable=False,
-    )
-
-    value = Column(
-        Text,
-        nullable=True,
-    )
-
-    notes = Column(
-        Text,
-        nullable=True,
-    )
-
-    requirement_type = Column(
-        String(100),
-        nullable=True,
-    )
-
-    status = Column(
-        String(100),
-        nullable=True,
-    )
-
-    # =====================================================
-    # GENERALIZED EXTRACTION FIELDS
-    # =====================================================
-
-    category = Column(
-        String(100),
-        nullable=True,
-    )
-
-    source_text = Column(
-        Text,
-        nullable=True,
-    )
-
-    # =====================================================
-    # REVIEW / DECISION FIELDS
-    # =====================================================
-
-    decision = Column(
-        String(100),
-        nullable=True,
-    )
-
-    decision_reason = Column(
-        Text,
-        nullable=True,
-    )
-
-    review_flags = Column(
-        JSON,
-        nullable=True,
-    )
-
-    recommended_action = Column(
-        Text,
-        nullable=True,
-    )
-
-    review_priority = Column(
-        String(50),
-        nullable=True,
-    )
+    decision = Column(String(100), nullable=True)
+    decision_reason = Column(Text, nullable=True)
+    review_flags = Column(JSON, nullable=True)
+    recommended_action = Column(Text, nullable=True)
+    review_priority = Column(String(50), nullable=True)
 
     analysis = relationship(
         "Analysis",
         back_populates="requirements",
     )
-
     matches = relationship(
         "StandardMatch",
         back_populates="requirement",
@@ -257,144 +124,42 @@ class Requirement(Base):
     )
 
 
-# =========================================================
-# STANDARD MATCH
-# =========================================================
-
 class StandardMatch(Base):
     __tablename__ = "standard_matches"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True,
-    )
-
+    id = Column(Integer, primary_key=True, index=True)
     requirement_id = Column(
         Integer,
-        ForeignKey(
-            "requirements.id",
-            ondelete="CASCADE",
-        ),
+        ForeignKey("requirements.id", ondelete="CASCADE"),
         nullable=False,
     )
 
-    traceability_id = Column(
-        String(100),
-        nullable=True,
-    )
+    traceability_id = Column(String(100), nullable=True)
+    standard_id = Column(String(100), nullable=True)
+    standard_number = Column(String(100), nullable=True)
+    title = Column(String(500), nullable=True)
 
-    standard_id = Column(
-        String(100),
-        nullable=True,
-    )
+    match_score = Column(Float, nullable=True)
+    confidence = Column(Float, nullable=True)
+    confidence_level = Column(String(50), nullable=True)
+    evidence_strength = Column(String(50), nullable=True)
 
-    standard_number = Column(
-        String(100),
-        nullable=True,
-    )
+    verified = Column(Boolean, default=False, nullable=False)
+    needs_human_review = Column(Boolean, default=True, nullable=False)
+    source_verification_status = Column(String(100), nullable=True)
+    source_name = Column(String(255), nullable=True)
+    source_url = Column(Text, nullable=True)
 
-    title = Column(
-        String(500),
-        nullable=True,
-    )
+    evidence_type = Column(String(100), nullable=True)
+    match_method = Column(String(100), nullable=True)
+    evidence = Column(JSON, nullable=True)
+    is_best_match = Column(Boolean, default=False, nullable=False)
 
-    match_score = Column(
-        Float,
-        nullable=True,
-    )
-
-    confidence = Column(
-        Float,
-        nullable=True,
-    )
-
-    confidence_level = Column(
-        String(50),
-        nullable=True,
-    )
-
-    evidence_strength = Column(
-        String(50),
-        nullable=True,
-    )
-
-    verified = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-    )
-
-    needs_human_review = Column(
-        Boolean,
-        default=True,
-        nullable=False,
-    )
-
-    source_verification_status = Column(
-        String(100),
-        nullable=True,
-    )
-
-    source_name = Column(
-        String(255),
-        nullable=True,
-    )
-
-    source_url = Column(
-        Text,
-        nullable=True,
-    )
-
-    evidence_type = Column(
-        String(100),
-        nullable=True,
-    )
-
-    match_method = Column(
-        String(100),
-        nullable=True,
-    )
-
-    evidence = Column(
-        JSON,
-        nullable=True,
-    )
-
-    is_best_match = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-    )
-
-    # =====================================================
-    # HYBRID AI FIELDS
-    # =====================================================
-
-    keyword_score = Column(
-        Float,
-        nullable=True,
-    )
-
-    semantic_score = Column(
-        Float,
-        nullable=True,
-    )
-
-    hybrid_score = Column(
-        Float,
-        nullable=True,
-    )
-
-    model_name = Column(
-        String(255),
-        nullable=True,
-    )
-
-    matched_keywords = Column(
-        JSON,
-        nullable=True,
-    )
+    keyword_score = Column(Float, nullable=True)
+    semantic_score = Column(Float, nullable=True)
+    hybrid_score = Column(Float, nullable=True)
+    model_name = Column(String(255), nullable=True)
+    matched_keywords = Column(JSON, nullable=True)
 
     requirement = relationship(
         "Requirement",
@@ -402,62 +167,31 @@ class StandardMatch(Base):
     )
 
 
-# =========================================================
-# STANDARD MASTER TABLE
-# =========================================================
-
 class Standard(Base):
     __tablename__ = "standards"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True,
-    )
-
+    id = Column(Integer, primary_key=True, index=True)
     standard_id = Column(
         String(100),
         unique=True,
         index=True,
         nullable=False,
     )
-
     standard_number = Column(
         String(150),
         unique=True,
         index=True,
         nullable=False,
     )
-
-    title = Column(
-        String(500),
-        nullable=False,
-    )
-
-    keywords = Column(
-        JSON,
-        nullable=False,
-        default=list,
-    )
-
-    verified = Column(
-        Boolean,
-        default=False,
-        nullable=False,
-    )
-
-    source_name = Column(
-        String(255),
-        nullable=True,
-    )
-
-    source_url = Column(
-        Text,
-        nullable=True,
-    )
-
+    title = Column(String(500), nullable=False)
+    keywords = Column(JSON, nullable=False, default=list)
+    verified = Column(Boolean, default=False, nullable=False)
+    source_name = Column(String(255), nullable=True)
+    source_url = Column(Text, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
         nullable=False,
     )
