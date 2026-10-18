@@ -85,5 +85,145 @@
   "verified": true,
   "source_name": "Bureau of Indian Standards",
   "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS002",
+  "standard_number": "IS 5831:1984",
+  "title": "Specification for PVC insulation and sheath of electric cables (First Revision)",
+  "category": "Electrical",
+  "product_type": "Cable insulation and sheath",
+  "keywords": [
+    "insulation",
+    "cable insulation",
+    "PVC insulation",
+    "sheath",
+    "PVC sheath",
+    "electrical cable",
+    "insulated cable"
+  ],
+  "description": "Official BIS catalogue metadata for PVC insulation and sheath used in electric cables.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS003",
+  "standard_number": "IS 10810 (Part 53):1984",
+  "title": "Methods of test for cables: Part 53 flammability test",
+  "category": "Electrical",
+  "product_type": "Electrical cable fire performance testing",
+  "keywords": [
+    "fire performance",
+    "fire safety",
+    "flammability",
+    "flammability test",
+    "electrical cable",
+    "cable fire test",
+    "fire resistance",
+    "cable testing"
+  ],
+  "description": "Official BIS catalogue metadata for flammability testing of electrical cables.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS004",
+  "standard_number": "IS 10810 (Part 0):1984",
+  "title": "Methods of test for cables Part 0 General",
+  "category": "Electrical",
+  "product_type": "Electrical cable testing",
+  "keywords": [
+    "testing",
+    "cable testing",
+    "test documentation",
+    "test methods",
+    "electrical cable",
+    "general cable test"
+  ],
+  "description": "Official BIS catalogue metadata for general methods of testing electrical cables.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS005",
+  "standard_number": "IS 10810 (Part 5):1984",
+  "title": "Methods of test for cables: Part 5 conductor resistance test",
+  "category": "Electrical",
+  "product_type": "Electrical cable conductor testing",
+  "keywords": [
+    "testing",
+    "cable testing",
+    "conductor resistance",
+    "resistance test",
+    "electrical cable",
+    "conductor test",
+    "test documentation"
+  ],
+  "description": "Official BIS catalogue metadata for conductor resistance testing of electrical cables.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS006",
+  "standard_number": "IS 10810 (Part 43):1984",
+  "title": "Methods of test for cables: Part 43 insulation resistance",
+  "category": "Electrical",
+  "product_type": "Cable insulation testing",
+  "keywords": [
+    "insulation",
+    "insulation resistance",
+    "insulation test",
+    "cable testing",
+    "electrical cable",
+    "resistance",
+    "test documentation"
+  ],
+  "description": "Official BIS catalogue metadata for insulation resistance testing of electrical cables.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS007",
+  "standard_number": "IS 10810 (Part 6):1984",
+  "title": "Methods of test for cables: Part 6 thickness of thermoplastic and elastomeric insulation and sheath",
+  "category": "Electrical",
+  "product_type": "Cable insulation and sheath testing",
+  "keywords": [
+    "insulation",
+    "cable insulation",
+    "insulation thickness",
+    "sheath",
+    "sheath thickness",
+    "thermoplastic insulation",
+    "cable testing"
+  ],
+  "description": "Official BIS catalogue metadata for testing thickness of thermoplastic and elastomeric cable insulation and sheath.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+},
+{
+  "id": "BIS008",
+  "standard_number": "IS 8130:2013",
+  "title": "Conductors for insulated electric cables and flexible cords - Specification (Second Revision)",
+  "category": "Electrical",
+  "product_type": "Electrical cable conductor",
+  "keywords": [
+    "electrical cable",
+    "conductor",
+    "cable conductor",
+    "insulated cable",
+    "flexible cord",
+    "building installation",
+    "electrical conductor"
+  ],
+  "description": "Official BIS catalogue metadata for conductors used in insulated electric cables and flexible cords.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
 }
 ]

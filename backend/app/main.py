@@ -749,6 +749,7 @@ def analyze_saved_pdf(
         ),
         "human_review_required": (
             human_review_count
+             + no_match_count
         ),
         "no_match_found": (
             no_match_count

@@ -1781,7 +1781,7 @@ function DashboardPage({
           icon="✓"
           label="Test Standards"
           value={standards.length}
-          description="Prototype dataset records"
+          description="Verified BIS + development records"
         />
 
         <StatCard
@@ -2894,13 +2894,68 @@ function RequirementCard({
               </div>
             )}
           </>
-        ) : (
-          <InfoBox
-            title="Standard Match"
-            value="No suitable standard match was found."
-          />
-        )}
+                ) : (
+          <div
+            style={{
+              marginTop: "18px",
+              padding: "18px",
+              border: "1px solid #d9e1f2",
+              borderRadius: "14px",
+              background: "#f8faff",
+            }}
+          >
+            <p
+              className="small-label"
+              style={{
+                marginBottom: "8px",
+              }}
+            >
+              STANDARD MATCH
+            </p>
 
+            <h4
+              style={{
+                margin: "0 0 8px",
+                fontSize: "18px",
+              }}
+            >
+              No Suitable Verified Standard Found
+            </h4>
+
+            <p
+              style={{
+                margin: "0 0 14px",
+                lineHeight: "1.6",
+                color: "#56627a",
+              }}
+            >
+              No sufficiently relevant verified standard was found
+              in the current PROCURAI standards dataset.
+              Verify this requirement using the official
+              Bureau of Indian Standards portal.
+            </p>
+
+            <a
+              href="https://standards.bis.gov.in/"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "10px 16px",
+                borderRadius: "10px",
+                background: "#263b80",
+                color: "#ffffff",
+                textDecoration: "none",
+                fontWeight: "700",
+                fontSize: "14px",
+              }}
+            >
+              Open BIS Verification Portal
+            </a>
+          </div>
+        )}
         <div
           style={{
             display: "grid",
@@ -2909,7 +2964,7 @@ function RequirementCard({
             gap: "14px",
             marginTop: "18px",
           }}
-        >
+       >
           <InfoBox
             title="Decision"
             value={cleanLabel(
@@ -2963,7 +3018,7 @@ function RequirementCard({
           </div>
         )}
       </div>
-    </div>
+  </div>
   );
 }
 
@@ -3530,6 +3585,15 @@ function StandardsPage({
 }) {
   const [search, setSearch] =
     useState("");
+    const verifiedStandardsCount =
+    standards.filter(
+      (standard) =>
+        standard?.verified === true
+    ).length;
+
+  const syntheticStandardsCount =
+    standards.length -
+    verifiedStandardsCount;
 
   const filteredStandards =
     standards.filter(
@@ -3569,21 +3633,38 @@ function StandardsPage({
           </p>
 
           <h2>
-            Available Test Standards
+            Available Standards
           </h2>
 
           <p className="subtitle">
-            Current prototype uses synthetic
-            test standards for development and
-            demonstration. These are not
-            authoritative BIS records.
+            PROCURAI uses verified BIS catalogue metadata
+            for user-facing recommendations and synthetic
+            development records for prototype testing.
           </p>
         </div>
 
-        <Badge
-          text={`${standards.length} Test Records`}
-          type="warning"
-        />
+        <div
+  style={{
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  }}
+>
+  <Badge
+    text={`${standards.length} Standards Records`}
+    type="success"
+  />
+
+  <Badge
+    text={`${verifiedStandardsCount} Verified BIS`}
+    type="success"
+  />
+
+  <Badge
+    text={`${syntheticStandardsCount} Synthetic Test`}
+    type="warning"
+  />
+</div>
       </div>
 
       <div
@@ -3626,13 +3707,15 @@ function StandardsPage({
               maxWidth: "720px",
             }}
           >
-            PROCURAI currently uses synthetic
-            test records for AI matching.
-            Final standard applicability should
-            be verified using the official
-            Bureau of Indian Standards source
-            before procurement or compliance
-            acceptance.
+           PROCURAI uses verified BIS catalogue
+metadata for user-facing standard
+recommendations. Synthetic records
+are retained only for prototype
+development and testing. Final
+standard applicability should still
+be verified using the official BIS
+source before procurement or
+compliance acceptance.
           </p>
 
           <div
@@ -3663,7 +3746,7 @@ function StandardsPage({
         <button
           type="button"
           className="primary-button"
-          onClick={openBisVerificationPortal}
+          onClick ={openBisVerificationPortal}
         >
           Open BIS Verification Portal
         </button>

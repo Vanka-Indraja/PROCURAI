@@ -68,7 +68,7 @@ def build_hybrid_decision(
             "decision": "NO_MATCH_FOUND",
 
             "decision_reason": (
-                "No sufficiently relevant standard "
+                "No sufficiently relevant verified standard "
                 "was identified using keyword and "
                 "semantic evidence."
             ),
@@ -78,9 +78,8 @@ def build_hybrid_decision(
             ],
 
             "recommended_action": (
-                "Review the requirement manually "
-                "and search for an appropriate "
-                "authoritative standard."
+                "Verify this requirement using the official "
+                "Bureau of Indian Standards portal."
             ),
 
             "review_priority": "HIGH",
@@ -690,45 +689,30 @@ def hybrid_match_requirement(
     )
 
 
+       # =====================================================
+    # 5. KEEP ONLY VERIFIED BIS CANDIDATES
     # =====================================================
-    # 5. RETURN TOP K CANDIDATES
+
+    verified_matches = [
+        item
+        for item in hybrid_matches
+        if item.get("verified") is True
+    ]
+
+
+    # =====================================================
+    # 6. RETURN TOP K VERIFIED BIS CANDIDATES
     # =====================================================
 
     top_matches = (
-        hybrid_matches[
+        verified_matches[
             :top_k
         ]
     )
 
 
     # =====================================================
-    # 6. SELECT BEST MATCH
-    # =====================================================
-    #
-    # IMPORTANT:
-    #
-    # Earlier version accepted a best match only when
-    # hybrid_score >= 35.
-    #
-    # Example:
-    # Rated Voltage -> STD001
-    #
-    # keyword evidence existed,
-    # but hybrid score was 26.8.
-    #
-    # Therefore best_match became null.
-    #
-    # New logic:
-    #
-    # A candidate is retained when:
-    #
-    # 1. It contains real keyword evidence
-    #        OR
-    # 2. Hybrid score passes semantic threshold.
-    #
-    # Low-confidence recommendations still require
-    # HUMAN REVIEW.
-    #
+    # 7. SELECT BEST VERIFIED BIS MATCH
     # =====================================================
 
     best_match = None
@@ -750,33 +734,33 @@ def hybrid_match_requirement(
 
 
         has_keyword_evidence = (
-            len(
-                matched_keywords
-            )
-            > 0
+            len(matched_keywords) > 0
         )
 
 
-        has_semantic_evidence = (
+        has_strong_semantic_evidence = (
             candidate.get(
                 "hybrid_score",
                 0,
             )
             >= MIN_ACCEPTABLE_SCORE
+            and
+            candidate.get(
+                "semantic_score",
+                0,
+            )
+            >= 45.0
         )
 
 
         if (
             has_keyword_evidence
-            or has_semantic_evidence
+            or has_strong_semantic_evidence
         ):
-            best_match = (
-                candidate
-            )
-
+            best_match = candidate
 
     # =====================================================
-    # 7. BUILD FINAL DECISION
+    # 8. BUILD FINAL DECISION
     # =====================================================
 
     decision_data = (
@@ -785,14 +769,11 @@ def hybrid_match_requirement(
             best_match,
         )
     )
-
-
-    # =====================================================
-    # 8. FINAL RESPONSE
+        # =====================================================
+    # 9. FINAL RESPONSE
     # =====================================================
 
     return {
-
         "decision": (
             decision_data[
                 "decision"
