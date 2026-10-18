@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { jsPDF } from "jspdf";
 import "./App.css";
 
 import {
@@ -12,6 +13,930 @@ import {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const REPORTS_PER_PAGE = 8;
+function generateAnalysisPdf(report) {
+  if (!report) {
+    throw new Error("Report data is unavailable.");
+  }
+
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const pageWidth =
+    doc.internal.pageSize.getWidth();
+
+  const pageHeight =
+    doc.internal.pageSize.getHeight();
+
+  const margin = 15;
+  const contentWidth =
+    pageWidth - margin * 2;
+
+  let y = 18;
+
+  function safeValue(
+    value,
+    fallback = "Not available"
+  ) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return fallback;
+    }
+
+    if (Array.isArray(value)) {
+      return value.length > 0
+        ? value.join(", ")
+        : fallback;
+    }
+
+    return String(value);
+  }
+
+  function cleanPdfLabel(value) {
+    if (!value) {
+      return "Not available";
+    }
+
+    return String(value)
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (letter) =>
+        letter.toUpperCase()
+      );
+  }
+
+  function pdfScore(value) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return "N/A";
+    }
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return safeValue(value);
+    }
+
+    return `${number.toFixed(1)}%`;
+  }
+
+  function pdfDate(value) {
+    if (!value) {
+      return "Not available";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return safeValue(value);
+    }
+
+    return date.toLocaleString();
+  }
+
+  function ensureSpace(
+    requiredHeight = 12
+  ) {
+    if (
+      y + requiredHeight >
+      pageHeight - 18
+    ) {
+      doc.addPage();
+      y = 18;
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(9);
+
+      doc.setTextColor(
+        90,
+        103,
+        128
+      );
+
+      doc.text(
+        "PROCURAI - Procurement Standards Intelligence",
+        margin,
+        y
+      );
+
+      y += 10;
+    }
+  }
+
+  function addParagraph(
+    text,
+    options = {}
+  ) {
+    const {
+      fontSize = 10,
+      bold = false,
+      color = [70, 82, 105],
+      spacing = 5,
+    } = options;
+
+    const value =
+      safeValue(text);
+
+    doc.setFont(
+      "helvetica",
+      bold
+        ? "bold"
+        : "normal"
+    );
+
+    doc.setFontSize(
+      fontSize
+    );
+
+    doc.setTextColor(
+      ...color
+    );
+
+    const lines =
+      doc.splitTextToSize(
+        value,
+        contentWidth
+      );
+
+    const lineHeight =
+      fontSize * 0.42 + 1.2;
+
+    ensureSpace(
+      lines.length *
+        lineHeight +
+        spacing
+    );
+
+    doc.text(
+      lines,
+      margin,
+      y
+    );
+
+    y +=
+      lines.length *
+        lineHeight +
+      spacing;
+  }
+  function addLabelValue(label, value) {
+  const labelText = `${label}:`;
+  const valueText = safeValue(value);
+
+  const labelColumnWidth = 42;
+  const gap = 3;
+
+  const valueWidth =
+    contentWidth -
+    labelColumnWidth -
+    gap;
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(9);
+
+  const valueLines =
+    doc.splitTextToSize(
+      valueText,
+      valueWidth
+    );
+
+  const lineHeight = 4.5;
+
+  const requiredHeight =
+    Math.max(
+      lineHeight,
+      valueLines.length *
+        lineHeight
+    ) + 2;
+
+  ensureSpace(
+    requiredHeight
+  );
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(9);
+
+  doc.setTextColor(
+    37,
+    50,
+    74
+  );
+
+  doc.text(
+    labelText,
+    margin,
+    y
+  );
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setTextColor(
+    85,
+    99,
+    124
+  );
+
+  doc.text(
+    valueLines,
+    margin +
+      labelColumnWidth +
+      gap,
+    y
+  );
+
+  y += requiredHeight;
+}
+
+  
+
+  function addSectionTitle(
+    title
+  ) {
+    ensureSpace(15);
+
+    y += 2;
+
+    doc.setFillColor(
+      242,
+      245,
+      252
+    );
+
+    doc.roundedRect(
+      margin,
+      y - 5,
+      contentWidth,
+      10,
+      2,
+      2,
+      "F"
+    );
+
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.setFontSize(11);
+
+    doc.setTextColor(
+      43,
+      64,
+      112
+    );
+
+    doc.text(
+      title,
+      margin + 4,
+      y + 1.5
+    );
+
+    y += 11;
+  }
+
+  // =====================================================
+  // COVER / HEADER
+  // =====================================================
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(22);
+
+  doc.setTextColor(
+    42,
+    64,
+    120
+  );
+
+  doc.text(
+    "PROCURAI",
+    margin,
+    y
+  );
+
+  y += 8;
+
+  doc.setFontSize(14);
+
+  doc.setTextColor(
+    32,
+    45,
+    70
+  );
+
+  doc.text(
+    "AI Procurement Standards Analysis Report",
+    margin,
+    y
+  );
+
+  y += 7;
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(9);
+
+  doc.setTextColor(
+    100,
+    112,
+    135
+  );
+
+  doc.text(
+    "Hybrid Keyword + Semantic AI | Explainable Recommendation & Human Review",
+    margin,
+    y
+  );
+
+  y += 10;
+
+  doc.setDrawColor(
+    220,
+    225,
+    235
+  );
+
+  doc.line(
+    margin,
+    y,
+    pageWidth - margin,
+    y
+  );
+
+  y += 9;
+
+  // =====================================================
+  // DOCUMENT OVERVIEW
+  // =====================================================
+
+  addSectionTitle(
+    "Document Overview"
+  );
+
+  addLabelValue(
+    "Document",
+    report?.filename
+  );
+
+  addLabelValue(
+    "Analysis ID",
+    report?.analysis_id
+  );
+
+  addLabelValue(
+    "Analysis Date",
+    pdfDate(
+      report?.analysis_timestamp
+    )
+  );
+
+  addLabelValue(
+    "Matching Engine",
+    report?.matching_engine ||
+      report?.matcher_version
+  );
+
+  addLabelValue(
+    "Document Status",
+    cleanPdfLabel(
+      report?.document_status
+    )
+  );
+
+  addLabelValue(
+    "Review Risk",
+    cleanPdfLabel(
+      report?.review_risk_level
+    )
+  );
+
+  if (
+    report?.review_risk_score !==
+      undefined &&
+    report?.review_risk_score !== null
+  ) {
+    addLabelValue(
+      "Risk Score",
+      report.review_risk_score
+    );
+  }
+
+  // =====================================================
+  // EXTRACTION / OCR
+  // =====================================================
+
+  addSectionTitle(
+    "Document Extraction"
+  );
+
+  addLabelValue(
+    "Total Pages",
+    report?.total_pages
+  );
+
+  addLabelValue(
+    "Extraction Mode",
+    cleanPdfLabel(
+      report?.extraction_mode
+    )
+  );
+
+  addLabelValue(
+    "OCR Used",
+    report?.ocr_used
+      ? "Yes"
+      : "No"
+  );
+
+  if (
+    report?.ocr_confidence !==
+      null &&
+    report?.ocr_confidence !==
+      undefined
+  ) {
+    addLabelValue(
+      "OCR Confidence",
+      pdfScore(
+        report.ocr_confidence
+      )
+    );
+  }
+
+  if (
+    report?.ocr_quality_status
+  ) {
+    addLabelValue(
+      "OCR Quality",
+      cleanPdfLabel(
+        report.ocr_quality_status
+      )
+    );
+  }
+
+  // =====================================================
+  // ANALYSIS SUMMARY
+  // =====================================================
+
+  const summary =
+    report?.summary || {};
+
+  addSectionTitle(
+    "Analysis Summary"
+  );
+
+  addLabelValue(
+    "Total Requirements",
+    summary?.total_requirements ??
+      report?.results?.length ??
+      0
+  );
+
+  addLabelValue(
+    "Human Review Required",
+    summary?.human_review_required ??
+      0
+  );
+
+  addLabelValue(
+    "Needs Clarification",
+    summary?.needs_clarification ??
+      0
+  );
+
+  addLabelValue(
+    "High Priority",
+    summary?.high_priority ??
+      0
+  );
+
+  addLabelValue(
+    "Medium Priority",
+    summary?.medium_priority ??
+      0
+  );
+
+  if (
+    Array.isArray(
+      report?.document_review_reasons
+    ) &&
+    report.document_review_reasons
+      .length > 0
+  ) {
+    addSectionTitle(
+      "Document Review Reasons"
+    );
+
+    report.document_review_reasons.forEach(
+      (reason, index) => {
+        addParagraph(
+          `${index + 1}. ${reason}`,
+          {
+            fontSize: 9,
+          }
+        );
+      }
+    );
+  }
+
+  // =====================================================
+  // REQUIREMENTS
+  // =====================================================
+
+  const results =
+    Array.isArray(
+      report?.results
+    )
+      ? report.results
+      : [];
+
+  addSectionTitle(
+    `Requirement Analysis (${results.length})`
+  );
+
+  results.forEach(
+    (item, index) => {
+      const requirement =
+        item?.requirement ||
+        {};
+
+      const bestMatch =
+        item?.best_match ||
+        null;
+
+      const candidates =
+        Array.isArray(
+          item?.all_matches
+        )
+          ? item.all_matches.slice(
+              0,
+              3
+            )
+          : bestMatch
+            ? [bestMatch]
+            : [];
+
+      ensureSpace(35);
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(12);
+
+      doc.setTextColor(
+        38,
+        55,
+        88
+      );
+
+      doc.text(
+        `Requirement ${index + 1}: ${safeValue(
+          requirement?.requirement,
+          "Unnamed Requirement"
+        )}`,
+        margin,
+        y
+      );
+
+      y += 7;
+
+      addLabelValue(
+        "Value",
+        requirement?.value
+      );
+
+      addLabelValue(
+        "Category",
+        cleanPdfLabel(
+          requirement?.category ||
+            requirement?.type
+        )
+      );
+
+      addLabelValue(
+        "Status",
+        cleanPdfLabel(
+          requirement?.status
+        )
+      );
+
+      addLabelValue(
+        "Decision",
+        cleanPdfLabel(
+          item?.decision
+        )
+      );
+
+      addLabelValue(
+        "Review Priority",
+        cleanPdfLabel(
+          item?.review_priority
+        )
+      );
+
+      if (
+        item?.decision_reason
+      ) {
+        addLabelValue(
+          "Decision Reason",
+          item.decision_reason
+        );
+      }
+
+      if (
+        item?.recommended_action
+      ) {
+        addLabelValue(
+          "Recommended Action",
+          item.recommended_action
+        );
+      }
+
+      if (
+        Array.isArray(
+          item?.review_flags
+        ) &&
+        item.review_flags.length >
+          0
+      ) {
+        addLabelValue(
+          "Review Flags",
+          item.review_flags
+            .map(
+              cleanPdfLabel
+            )
+            .join(", ")
+        );
+      }
+
+      if (bestMatch) {
+        addParagraph(
+          "Recommended Standard",
+          {
+            fontSize: 10,
+            bold: true,
+            color: [
+              55,
+              76,
+              135,
+            ],
+            spacing: 3,
+          }
+        );
+
+        addLabelValue(
+          "Standard Number",
+          bestMatch?.standard_number ||
+            bestMatch?.standard_id
+        );
+
+        addLabelValue(
+          "Title",
+          bestMatch?.title
+        );
+
+        addLabelValue(
+          "Source",
+          bestMatch?.source_name
+        );
+
+        addLabelValue(
+          "Source Status",
+          bestMatch?.verified
+            ? "Verified BIS Source"
+            : "Synthetic Test Dataset"
+        );
+
+        addLabelValue(
+          "Keyword Score",
+          pdfScore(
+            bestMatch?.keyword_score
+          )
+        );
+
+        addLabelValue(
+          "Semantic Score",
+          pdfScore(
+            bestMatch?.semantic_score
+          )
+        );
+
+        addLabelValue(
+          "Hybrid Score",
+          pdfScore(
+            bestMatch?.hybrid_score ??
+              bestMatch?.confidence
+          )
+        );
+
+        if (
+          Array.isArray(
+            bestMatch?.matched_keywords
+          ) &&
+          bestMatch
+            .matched_keywords.length >
+            0
+        ) {
+          addLabelValue(
+            "Matched Keywords",
+            bestMatch
+              .matched_keywords
+              .join(", ")
+          );
+        }
+      }
+
+      if (
+        candidates.length > 0
+      ) {
+        addParagraph(
+          "Top Candidate Standards",
+          {
+            fontSize: 10,
+            bold: true,
+            color: [
+              55,
+              76,
+              135,
+            ],
+            spacing: 3,
+          }
+        );
+
+        candidates.forEach(
+          (
+            candidate,
+            candidateIndex
+          ) => {
+            const sourceStatus =
+              candidate?.verified
+                ? "Verified BIS"
+                : "Synthetic";
+
+            addParagraph(
+              `#${candidateIndex + 1} ${safeValue(
+                candidate?.standard_number ||
+                  candidate?.standard_id,
+                "Standard"
+              )} | ${pdfScore(
+                candidate?.hybrid_score ??
+                  candidate?.confidence ??
+                  candidate?.match_score
+              )} | ${sourceStatus}`,
+              {
+                fontSize: 9,
+                bold:
+                  candidateIndex ===
+                  0,
+                spacing: 2,
+              }
+            );
+
+            addParagraph(
+              safeValue(
+                candidate?.title,
+                "Title unavailable"
+              ),
+              {
+                fontSize: 8,
+                color: [
+                  105,
+                  115,
+                  135,
+                ],
+                spacing: 3,
+              }
+            );
+          }
+        );
+      }
+
+      y += 4;
+
+      ensureSpace(4);
+
+      doc.setDrawColor(
+        228,
+        232,
+        240
+      );
+
+      doc.line(
+        margin,
+        y,
+        pageWidth - margin,
+        y
+      );
+
+      y += 8;
+    }
+  );
+
+  // =====================================================
+  // DISCLAIMER
+  // =====================================================
+
+  addSectionTitle(
+    "Important Verification Notice"
+  );
+
+  addParagraph(
+    "PROCURAI provides AI-assisted candidate standard recommendations based on requirement relevance, keyword similarity and semantic similarity. A recommendation is not a final legal or compliance determination. Verified BIS metadata indicates that the referenced standard metadata was obtained from an official source; final applicability must still be checked against the latest official Bureau of Indian Standards information and reviewed by an appropriate human expert.",
+    {
+      fontSize: 9,
+      color: [
+        85,
+        95,
+        115,
+      ],
+      spacing: 5,
+    }
+  );
+
+  // =====================================================
+  // PAGE NUMBERS
+  // =====================================================
+
+  const totalPdfPages =
+    doc.getNumberOfPages();
+
+  for (
+    let page = 1;
+    page <= totalPdfPages;
+    page += 1
+  ) {
+    doc.setPage(page);
+
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
+    doc.setFontSize(8);
+
+    doc.setTextColor(
+      125,
+      135,
+      150
+    );
+
+    doc.text(
+      `PROCURAI | Page ${page} of ${totalPdfPages}`,
+      pageWidth - margin,
+      pageHeight - 8,
+      {
+        align: "right",
+      }
+    );
+  }
+
+  // =====================================================
+  // SAVE FILE
+  // =====================================================
+
+  const originalName =
+    safeValue(
+      report?.filename,
+      "procurement-analysis"
+    )
+      .replace(/\.pdf$/i, "")
+      .replace(
+        /[^a-zA-Z0-9-_]+/g,
+        "_"
+      );
+
+  doc.save(
+    `${originalName}_PROCURAI_Report.pdf`
+  );
+}
 
 // =========================================================
 // SAFE HELPERS
@@ -309,6 +1234,28 @@ function App() {
       );
     }
   }
+ async function handleDownloadReport(analysisId) {
+  if (!analysisId) {
+    return;
+  }
+
+  try {
+    const report =
+      await getReport(analysisId);
+
+    generateAnalysisPdf(report);
+  } catch (error) {
+    console.error(
+      "Unable to download report:",
+      error
+    );
+
+    window.alert(
+      error?.message ||
+        "Unable to generate PDF report."
+    );
+  }
+}
 
   async function handleDeleteReport(analysisId) {
     if (!analysisId) {
@@ -676,6 +1623,9 @@ function App() {
             error={reportsError}
             handleViewReport={
               handleViewReport
+            }
+            handleDownloadReport={
+              handleDownloadReport
             }
             handleDeleteReport={
               handleDeleteReport
@@ -2155,6 +3105,7 @@ function ReportsPage({
   loading,
   error,
   handleViewReport,
+  handleDownloadReport,
   handleDeleteReport,
 }) {
   const [search, setSearch] =
@@ -2357,6 +3308,11 @@ function ReportsPage({
                         report?.analysis_id
                       )
                     }
+                    onDownload={() =>
+                      handleDownloadReport(
+                        report?.analysis_id
+                      )
+                    }
                     onDelete={() =>
                       handleDeleteReport(
                         report?.analysis_id
@@ -2456,6 +3412,7 @@ function ReportsPage({
 function ReportCard({
   report,
   onView,
+  onDownload,
   onDelete,
 }) {
   const status =
@@ -2541,6 +3498,12 @@ function ReportCard({
         >
           View Report
         </button>
+        <button
+    className="secondary-button"
+    onClick={onDownload}
+  >
+    Download PDF
+  </button>
 
         <button
           className="secondary-button"
