@@ -1505,6 +1505,14 @@ function RequirementCard({
   const reviewFlags =
     getReviewFlags(item);
 
+  const topCandidates =
+    Array.isArray(item?.all_matches) &&
+    item.all_matches.length > 0
+      ? item.all_matches.slice(0, 3)
+      : bestMatch
+        ? [bestMatch]
+        : [];
+
   return (
     <div
       style={{
@@ -1746,6 +1754,195 @@ function RequirementCard({
                 item?.decision_reason
               }
             />
+
+            {topCandidates.length > 0 && (
+              <div
+                style={{
+                  marginTop: "20px",
+                  padding: "18px",
+                  border:
+                    "1px solid #e4e9f3",
+                  borderRadius: "15px",
+                  background: "#fbfcff",
+                }}
+              >
+                <div
+                  style={{
+                    marginBottom: "15px",
+                  }}
+                >
+                  <p className="small-label">
+                    TOP CANDIDATE STANDARDS
+                  </p>
+
+                  <p
+                    style={{
+                      margin: "5px 0 0",
+                      color: "#6b7890",
+                      fontSize: "12px",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    Ranked by hybrid keyword and
+                    semantic similarity. Official
+                    source verification is shown
+                    separately from relevance.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "12px",
+                  }}
+                >
+                  {topCandidates.map(
+                    (candidate, candidateIndex) => (
+                      <div
+                        key={
+                          candidate?.traceability_id ||
+                          candidate?.standard_id ||
+                          candidateIndex
+                        }
+                        style={{
+                          display: "flex",
+                          justifyContent:
+                            "space-between",
+                          alignItems: "center",
+                          gap: "16px",
+                          padding: "14px 16px",
+                          border:
+                            candidateIndex === 0
+                              ? "1px solid #cfdafe"
+                              : "1px solid #e6eaf1",
+                          borderRadius: "13px",
+                          background:
+                            candidateIndex === 0
+                              ? "#f5f7ff"
+                              : "#ffffff",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div
+                          style={{
+                            flex: 1,
+                            minWidth: "220px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              flexWrap: "wrap",
+                              marginBottom: "6px",
+                            }}
+                          >
+                            <Badge
+                              text={`#${candidateIndex + 1}`}
+                              type={
+                                candidateIndex === 0
+                                  ? "info"
+                                  : "neutral"
+                              }
+                            />
+
+                            <strong
+                              style={{
+                                color: "#24324a",
+                              }}
+                            >
+                              {safeText(
+                                candidate?.standard_number ||
+                                  candidate?.standard_id,
+                                "Standard"
+                              )}
+                            </strong>
+
+                            {candidate?.verified ? (
+                              <Badge
+                                text="Verified BIS"
+                                type="success"
+                              />
+                            ) : (
+                              <Badge
+                                text="Synthetic"
+                                type="warning"
+                              />
+                            )}
+                          </div>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              color: "#66738b",
+                              fontSize: "12px",
+                              lineHeight: 1.55,
+                            }}
+                          >
+                            {safeText(
+                              candidate?.title,
+                              "Standard title unavailable"
+                            )}
+                          </p>
+
+                          <p
+                            style={{
+                              margin:
+                                "6px 0 0",
+                              color: "#8993a5",
+                              fontSize: "11px",
+                            }}
+                          >
+                            Source:{" "}
+                            <strong>
+                              {safeText(
+                                candidate?.source_name,
+                                candidate?.verified
+                                  ? "Bureau of Indian Standards"
+                                  : "Synthetic Test Dataset"
+                              )}
+                            </strong>
+                          </p>
+                        </div>
+
+                        <div
+                          style={{
+                            textAlign: "right",
+                            minWidth: "100px",
+                          }}
+                        >
+                          <p
+                            className="small-label"
+                            style={{
+                              marginBottom: "4px",
+                            }}
+                          >
+                            MATCH SCORE
+                          </p>
+
+                          <strong
+                            style={{
+                              fontSize: "20px",
+                              color:
+                                candidateIndex === 0
+                                  ? "#4c6be7"
+                                  : "#36445d",
+                            }}
+                          >
+                            {formatScore(
+                              candidate?.hybrid_score ??
+                                candidate?.confidence ??
+                                candidate?.match_score
+                            )}
+                          </strong>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <InfoBox
@@ -2392,6 +2589,14 @@ function StandardsPage({
       }
     );
 
+  function openBisVerificationPortal() {
+    window.open(
+      "https://standards.bis.gov.in/",
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
   return (
     <section className="recent-section">
       <div className="section-heading">
@@ -2416,6 +2621,89 @@ function StandardsPage({
           text={`${standards.length} Test Records`}
           type="warning"
         />
+      </div>
+
+      <div
+        style={{
+          marginTop: "22px",
+          padding: "22px",
+          borderRadius: "16px",
+          border: "1px solid #dce5f5",
+          background: "#f8faff",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            minWidth: "260px",
+          }}
+        >
+          <p className="small-label">
+            OFFICIAL VERIFICATION SOURCE
+          </p>
+
+          <h3
+            style={{
+              margin: "5px 0 8px",
+              fontSize: "18px",
+            }}
+          >
+            Bureau of Indian Standards (BIS)
+          </h3>
+
+          <p
+            className="subtitle"
+            style={{
+              margin: 0,
+              maxWidth: "720px",
+            }}
+          >
+            PROCURAI currently uses synthetic
+            test records for AI matching.
+            Final standard applicability should
+            be verified using the official
+            Bureau of Indian Standards source
+            before procurement or compliance
+            acceptance.
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              marginTop: "14px",
+            }}
+          >
+            <Badge
+              text="AI Recommendation"
+              type="info"
+            />
+
+            <Badge
+              text="Human Verification Required"
+              type="warning"
+            />
+
+            <Badge
+              text="Official Source: BIS"
+              type="success"
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={openBisVerificationPortal}
+        >
+          Open BIS Verification Portal
+        </button>
       </div>
 
       <div

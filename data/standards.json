@@ -65,5 +65,25 @@
     "verified": false,
     "source_name": "Synthetic Test Dataset",
     "source_url": null
-  }
+  },
+  {
+  "id": "BIS001",
+  "standard_number": "IS 694:2010",
+  "title": "Polyvinyl chloride insulated unsheathed and sheathed cables/cords with rigid and flexible conductor for rated voltages up to and including 1 100 V (Fourth Revision)",
+  "category": "Electrical",
+  "product_type": "Electrical cable",
+  "keywords": [
+    "electrical cable",
+    "building installation",
+    "rated voltage",
+    "1100 V",
+    "1.1 kV",
+    "PVC cable",
+    "insulated cable"
+  ],
+  "description": "Official BIS catalogue metadata for PVC insulated cables and cords rated up to and including 1100 V.",
+  "verified": true,
+  "source_name": "Bureau of Indian Standards",
+  "source_url": "https://standards.bis.gov.in/"
+}
 ]
