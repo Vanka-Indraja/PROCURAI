@@ -1779,7 +1779,7 @@ function DashboardPage({
 
         <StatCard
           icon="✓"
-          label="Test Standards"
+          label="Standards Dataset"
           value={standards.length}
           description="Verified BIS + development records"
         />
